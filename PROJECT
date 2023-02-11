@@ -17,4 +17,22 @@ resources:
   kind: Cluster
   path: github.com/ntnguyencse/kaas/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: automation.dcn.ssu.ac.kr
+  group: intent
+  kind: ClusterDescription
+  path: github.com/ntnguyencse/kaas/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: automation.dcn.ssu.ac.kr
+  group: intent
+  kind: Blueprint
+  path: github.com/ntnguyencse/kaas/api/v1
+  version: v1
 version: "3"

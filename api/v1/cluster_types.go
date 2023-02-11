@@ -21,7 +21,7 @@ import (
 )
 
 // Blueprint Spec of Cluster Resource referred
-type BlueprintSpec struct {
+type BlueprintInfoSpec struct {
 	// Name of kind Blueprint
 	Name string `json:"name,omitempty"`
 	// Type Blueprint
@@ -33,7 +33,7 @@ type BlueprintSpec struct {
 }
 
 // Content of Blueprint Packages
-type Blueprint struct {
+type BlueprintInfo struct {
 	// Name of Blueprint
 	Name string `json:"name,omitempty"`
 	// Spec
@@ -42,14 +42,14 @@ type Blueprint struct {
 	Override map[string]string `json:"override,omitempty"`
 }
 
-type BlueprintList struct {
+type BlueprintInfoList struct {
 	Items []Blueprint `json:"items,omitempty"`
 }
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	Infrastructure BlueprintList `json:"infrastructure,omitempty"`
-	Software       BlueprintList `json:"software,omitempty"`
+	Infrastructure BlueprintInfoList `json:"infrastructure,omitempty"`
+	Software       BlueprintInfoList `json:"software,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster
