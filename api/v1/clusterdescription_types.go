@@ -23,19 +23,26 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type DescriptionSpec struct {
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+	BlueprintInfo BlueprintInfo     `json:"info,omitempty"`
+	Spec          map[string]string `json:"spec,omitempty"`
+}
+
 // ClusterDescriptionSpec defines the desired state of ClusterDescription
 type ClusterDescriptionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of ClusterDescription. Edit clusterdescription_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Infrastructure []DescriptionSpec `json:"infrastructure,omitempty"`
+	Software       []DescriptionSpec `json:"software,omitempty"`
 }
 
 // ClusterDescriptionStatus defines the observed state of ClusterDescription
 type ClusterDescriptionStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	status string `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -28,14 +28,16 @@ type BlueprintSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Blueprint. Edit blueprint_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Blueprint refer to another blueprint
+	Blueprints BlueprintInfoList `json:"blueprint,omitempty"`
+	values     map[string]string `json:"values,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint
 type BlueprintStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	status string `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

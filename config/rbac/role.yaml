@@ -8,6 +8,58 @@ rules:
 - apiGroups:
   - intent.automation.dcn.ssu.ac.kr
   resources:
+  - blueprints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - blueprints/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - blueprints/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - clusterdescriptions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - clusterdescriptions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - clusterdescriptions/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
   - clusters
   verbs:
   - create
