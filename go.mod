@@ -1,4 +1,4 @@
-module github.com/ntnguyencse/kaas
+module github.com/ntnguyencse/intent-kaas
 
 go 1.19
 

@@ -55,7 +55,32 @@ spec:
                           type: string
                         metadata:
                           type: object
-                        spec: {}
+                        spec:
+                          description: BlueprintSpec defines the desired state of
+                            Blueprint
+                          properties:
+                            blueprint:
+                              description: Blueprint refer to another blueprint
+                              items:
+                                description: Content of Blueprint Packages
+                                properties:
+                                  name:
+                                    description: Name of Blueprint
+                                    type: string
+                                  override:
+                                    additionalProperties:
+                                      type: string
+                                    description: Override field of blueprint
+                                    type: object
+                                  spec:
+                                    description: Spec
+                                type: object
+                              type: array
+                            values:
+                              additionalProperties:
+                                type: string
+                              type: object
+                          type: object
                         status:
                           description: BlueprintStatus defines the observed state
                             of Blueprint
@@ -67,6 +92,7 @@ spec:
                               type: string
                           type: object
                       type: object
+                      x-kubernetes-preserve-unknown-fields: true
                     type: array
                 type: object
               software:
@@ -89,7 +115,32 @@ spec:
                           type: string
                         metadata:
                           type: object
-                        spec: {}
+                        spec:
+                          description: BlueprintSpec defines the desired state of
+                            Blueprint
+                          properties:
+                            blueprint:
+                              description: Blueprint refer to another blueprint
+                              items:
+                                description: Content of Blueprint Packages
+                                properties:
+                                  name:
+                                    description: Name of Blueprint
+                                    type: string
+                                  override:
+                                    additionalProperties:
+                                      type: string
+                                    description: Override field of blueprint
+                                    type: object
+                                  spec:
+                                    description: Spec
+                                type: object
+                              type: array
+                            values:
+                              additionalProperties:
+                                type: string
+                              type: object
+                          type: object
                         status:
                           description: BlueprintStatus defines the observed state
                             of Blueprint
@@ -101,6 +152,7 @@ spec:
                               type: string
                           type: object
                       type: object
+                      x-kubernetes-preserve-unknown-fields: true
                     type: array
                 type: object
             type: object
@@ -108,6 +160,7 @@ spec:
             description: ClusterStatus defines the observed state of Cluster
             type: object
         type: object
+        x-kubernetes-preserve-unknown-fields: true
     served: true
     storage: true
     subresources:

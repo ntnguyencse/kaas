@@ -23,22 +23,29 @@ import (
 // Blueprint Spec of Cluster Resource referred
 type BlueprintInfoSpec struct {
 	// Name of kind Blueprint
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 	// Type Blueprint
+	// +kubebuilder:validation:Required
 	Type string `json:"type,omitempty"`
 	// Revision of Blueprint
+	// +kubebuilder:validation:Required
 	Revision string `json:"revision,omitempty"`
 	// Published Version of Blueprint
+	// +kubebuilder:validation:Required
 	Version string `json:"version,omitempty"`
 }
 
 // Content of Blueprint Packages
 type BlueprintInfo struct {
 	// Name of Blueprint
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 	// Spec
+	// +kubebuilder:validation:Required
 	Spec BlueprintSpec `json:"spec,omitempty"`
 	// Override field of blueprint
+	// +kubebuilder:validation:Optional
 	Override map[string]string `json:"override,omitempty"`
 }
 
@@ -58,9 +65,9 @@ type ClusterStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:pruning:PreserveUnknownFields
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`

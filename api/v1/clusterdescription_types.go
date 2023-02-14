@@ -26,28 +26,32 @@ import (
 type DescriptionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	BlueprintInfo BlueprintInfo     `json:"info,omitempty"`
-	Spec          map[string]string `json:"spec,omitempty"`
+	// +kubebuilder:validation:Required
+	BlueprintInfo BlueprintInfo `json:"info,omitempty"`
+	// +kubebuilder:validation:Required
+	Spec map[string]string `json:"spec,omitempty"`
 }
 
 // ClusterDescriptionSpec defines the desired state of ClusterDescription
 type ClusterDescriptionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// +kubebuilder:validation:Required
 	Infrastructure []DescriptionSpec `json:"infrastructure,omitempty"`
-	Software       []DescriptionSpec `json:"software,omitempty"`
+	// +kubebuilder:validation:Required
+	Software []DescriptionSpec `json:"software,omitempty"`
 }
 
 // ClusterDescriptionStatus defines the observed state of ClusterDescription
 type ClusterDescriptionStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	status string `json:"status,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:pruning:PreserveUnknownFields
 // ClusterDescription is the Schema for the clusterdescriptions API
 type ClusterDescription struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -57,8 +61,8 @@ type ClusterDescription struct {
 	Status ClusterDescriptionStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-
+// +kubebuilder:object:root=true
+// +kubebuilder:pruning:PreserveUnknownFields
 // ClusterDescriptionList contains a list of ClusterDescription
 type ClusterDescriptionList struct {
 	metav1.TypeMeta `json:",inline"`

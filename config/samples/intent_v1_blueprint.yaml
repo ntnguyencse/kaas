@@ -10,3 +10,13 @@ metadata:
   name: blueprint-sample
 spec:
   # TODO(user): Add fields here
+  blueprint: 
+      name: clusterapi-resource-template-default
+      type: ClusterAPITemplate
+      revision: 1.0.0
+  values:
+      kubernetesVersion: v1.24.8
+      controlPlaneMachineCount: 1
+      workerMachineCount: 3
+      controlplaneFlavor: m1.medium
+      workerFlavor: m1.large

@@ -29,20 +29,20 @@ type BlueprintSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Blueprint refer to another blueprint
-	Blueprints BlueprintInfoList `json:"blueprint,omitempty"`
-	values     map[string]string `json:"values,omitempty"`
+	Blueprints []BlueprintInfo   `json:"blueprint,omitempty"`
+	Values     map[string]string `json:"values,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint
 type BlueprintStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	status string `json:"status,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:pruning:PreserveUnknownFields
 // Blueprint is the Schema for the blueprints API
 type Blueprint struct {
 	metav1.TypeMeta   `json:",inline"`
