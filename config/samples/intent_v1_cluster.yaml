@@ -7,6 +7,29 @@ metadata:
     app.kubernetes.io/part-of: kubernetes-as-a-service
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: kubernetes-as-a-service
+    automation.dcn.ssu.ac.kr/region: kr-seoul
+    automation.dcn.ssu.ac.kr/zone: public
   name: cluster-sample
 spec:
   # TODO(user): Add fields here
+  infrastructure:
+    spec:
+      provider: 
+        name: openstack
+        blueprint: 
+          name: openstack-small-cluster
+          type: ClusterTemplate
+          revision: 1.0.0
+        override:
+          kubernetesVersion: v1.25.0
+      cni:
+        name: flannel
+        blueprint: 
+          name: flannel-default
+          type: CNITemplate
+          revision: 1.0.0
+  software:
+    - name: prometheus
+      blueprint: prometheus-default
+        type: ApplicationTemplate
+        revison: 1.0.0

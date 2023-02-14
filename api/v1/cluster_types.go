@@ -21,35 +21,42 @@ import (
 )
 
 // Blueprint Spec of Cluster Resource referred
-type BlueprintSpec struct {
+type BlueprintInfoSpec struct {
 	// Name of kind Blueprint
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 	// Type Blueprint
+	// +kubebuilder:validation:Required
 	Type string `json:"type,omitempty"`
 	// Revision of Blueprint
+	// +kubebuilder:validation:Required
 	Revision string `json:"revision,omitempty"`
 	// Published Version of Blueprint
+	// +kubebuilder:validation:Required
 	Version string `json:"version,omitempty"`
 }
 
 // Content of Blueprint Packages
-type Blueprint struct {
+type BlueprintInfo struct {
 	// Name of Blueprint
+
 	Name string `json:"name,omitempty"`
 	// Spec
-	Spec BlueprintSpec `json:"spec,omitempty"`
+
+	Spec BlueprintInfoSpec `json:"spec,omitempty"`
 	// Override field of blueprint
+	// +kubebuilder:validation:Optional
 	Override map[string]string `json:"override,omitempty"`
 }
 
-type BlueprintList struct {
+type BlueprintInfoList struct {
 	Items []Blueprint `json:"items,omitempty"`
 }
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	Infrastructure BlueprintList `json:"infrastructure,omitempty"`
-	Software       BlueprintList `json:"software,omitempty"`
+	Infrastructure []BlueprintInfo `json:"infrastructure,omitempty"`
+	Software       []BlueprintInfo `json:"software,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster
@@ -58,9 +65,9 @@ type ClusterStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:pruning:PreserveUnknownFields
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`

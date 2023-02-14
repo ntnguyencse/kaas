@@ -36,76 +36,69 @@ spec:
             description: ClusterSpec defines the desired state of Cluster
             properties:
               infrastructure:
-                properties:
-                  items:
-                    items:
-                      description: Content of Blueprint Packages
+                items:
+                  description: Content of Blueprint Packages
+                  properties:
+                    name:
+                      type: string
+                    override:
+                      additionalProperties:
+                        type: string
+                      description: Override field of blueprint
+                      type: object
+                    spec:
+                      description: Blueprint Spec of Cluster Resource referred
                       properties:
                         name:
-                          description: Name of Blueprint
+                          description: Name of kind Blueprint
                           type: string
-                        override:
-                          additionalProperties:
-                            type: string
-                          description: Override field of blueprint
-                          type: object
-                        spec:
-                          description: Spec
-                          properties:
-                            name:
-                              description: Name of kind Blueprint
-                              type: string
-                            revision:
-                              description: Revision of Blueprint
-                              type: string
-                            type:
-                              description: Type Blueprint
-                              type: string
-                            version:
-                              description: Published Version of Blueprint
-                              type: string
-                          type: object
+                        revision:
+                          description: Revision of Blueprint
+                          type: string
+                        type:
+                          description: Type Blueprint
+                          type: string
+                        version:
+                          description: Published Version of Blueprint
+                          type: string
                       type: object
-                    type: array
-                type: object
+                  type: object
+                type: array
               software:
-                properties:
-                  items:
-                    items:
-                      description: Content of Blueprint Packages
+                items:
+                  description: Content of Blueprint Packages
+                  properties:
+                    name:
+                      type: string
+                    override:
+                      additionalProperties:
+                        type: string
+                      description: Override field of blueprint
+                      type: object
+                    spec:
+                      description: Blueprint Spec of Cluster Resource referred
                       properties:
                         name:
-                          description: Name of Blueprint
+                          description: Name of kind Blueprint
                           type: string
-                        override:
-                          additionalProperties:
-                            type: string
-                          description: Override field of blueprint
-                          type: object
-                        spec:
-                          description: Spec
-                          properties:
-                            name:
-                              description: Name of kind Blueprint
-                              type: string
-                            revision:
-                              description: Revision of Blueprint
-                              type: string
-                            type:
-                              description: Type Blueprint
-                              type: string
-                            version:
-                              description: Published Version of Blueprint
-                              type: string
-                          type: object
+                        revision:
+                          description: Revision of Blueprint
+                          type: string
+                        type:
+                          description: Type Blueprint
+                          type: string
+                        version:
+                          description: Published Version of Blueprint
+                          type: string
                       type: object
-                    type: array
-                type: object
+                  type: object
+                type: array
             type: object
           status:
             description: ClusterStatus defines the observed state of Cluster
             type: object
         type: object
+        x-kubernetes-preserve-unknown-fields: true
     served: true
     storage: true
     subresources:

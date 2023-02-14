@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	intentv1 "github.com/ntnguyencse/kaas/api/v1"
-	"github.com/ntnguyencse/kaas/controllers"
+	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
+	"github.com/ntnguyencse/intent-kaas/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -88,6 +88,7 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+	setupLog.Info("Set up manager.")
 
 	if err = (&controllers.ClusterReconciler{
 		Client: mgr.GetClient(),
@@ -96,6 +97,42 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Cluster")
 		os.Exit(1)
 	}
+	setupLog.Info("Created controller.", "controller", "Cluster")
+	if err = (&controllers.ClusterDescriptionReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterDescription")
+		os.Exit(1)
+	}
+	setupLog.Info("Created controller.", "controller", "Cluster Description")
+	if err = (&controllers.BlueprintReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Blueprint")
+		os.Exit(1)
+	}
+	setupLog.Info("Created controller.", "controller", "Blueprint")
+	// if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	// if false {
+	// 	if err = (&intentv1.Cluster{}).SetupWebhookWithManager(mgr); err != nil {
+	// 		setupLog.Error(err, "unable to create webhook", "webhook", "CronJob")
+	// 		os.Exit(1)
+	// 	}
+	// }
+	// if false {
+	// 	if err = (&intentv1.Blueprint{}).SetupWebhookWithManager(mgr); err != nil {
+	// 		setupLog.Error(err, "unable to create webhook", "webhook", "CronJob")
+	// 		os.Exit(1)
+	// 	}
+	// }
+	// if false {
+	// 	if err = (&intentv1.ClusterDescription{}).SetupWebhookWithManager(mgr); err != nil {
+	// 		setupLog.Error(err, "unable to create webhook", "webhook", "CronJob")
+	// 		os.Exit(1)
+	// 	}
+	// }
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
