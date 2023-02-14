@@ -37,17 +37,12 @@ spec:
             description: ClusterDescriptionSpec defines the desired state of ClusterDescription
             properties:
               infrastructure:
-                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                  Important: Run "make" to regenerate code after modifying this file'
                 items:
                   properties:
                     info:
-                      description: 'INSERT ADDITIONAL SPEC FIELDS - desired state
-                        of cluster Important: Run "make" to regenerate code after
-                        modifying this file'
+                      description: Content of Blueprint Packages
                       properties:
                         name:
-                          description: Name of Blueprint
                           type: string
                         override:
                           additionalProperties:
@@ -55,7 +50,21 @@ spec:
                           description: Override field of blueprint
                           type: object
                         spec:
-                          description: Spec
+                          description: Blueprint Spec of Cluster Resource referred
+                          properties:
+                            name:
+                              description: Name of kind Blueprint
+                              type: string
+                            revision:
+                              description: Revision of Blueprint
+                              type: string
+                            type:
+                              description: Type Blueprint
+                              type: string
+                            version:
+                              description: Published Version of Blueprint
+                              type: string
+                          type: object
                       type: object
                     spec:
                       additionalProperties:
@@ -67,12 +76,9 @@ spec:
                 items:
                   properties:
                     info:
-                      description: 'INSERT ADDITIONAL SPEC FIELDS - desired state
-                        of cluster Important: Run "make" to regenerate code after
-                        modifying this file'
+                      description: Content of Blueprint Packages
                       properties:
                         name:
-                          description: Name of Blueprint
                           type: string
                         override:
                           additionalProperties:
@@ -80,7 +86,21 @@ spec:
                           description: Override field of blueprint
                           type: object
                         spec:
-                          description: Spec
+                          description: Blueprint Spec of Cluster Resource referred
+                          properties:
+                            name:
+                              description: Name of kind Blueprint
+                              type: string
+                            revision:
+                              description: Revision of Blueprint
+                              type: string
+                            type:
+                              description: Type Blueprint
+                              type: string
+                            version:
+                              description: Published Version of Blueprint
+                              type: string
+                          type: object
                       type: object
                     spec:
                       additionalProperties:

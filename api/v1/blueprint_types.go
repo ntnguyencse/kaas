@@ -29,8 +29,8 @@ type BlueprintSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Blueprint refer to another blueprint
-	Blueprints []BlueprintInfo   `json:"blueprint,omitempty"`
-	Values     map[string]string `json:"values,omitempty"`
+	Blueprints []BlueprintInfoSpec `json:"blueprint,omitempty"`
+	Values     map[string]string   `json:"values,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint

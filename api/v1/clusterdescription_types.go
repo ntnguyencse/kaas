@@ -26,9 +26,9 @@ import (
 type DescriptionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	// +kubebuilder:validation:Required
+
 	BlueprintInfo BlueprintInfo `json:"info,omitempty"`
-	// +kubebuilder:validation:Required
+
 	Spec map[string]string `json:"spec,omitempty"`
 }
 
@@ -36,9 +36,9 @@ type DescriptionSpec struct {
 type ClusterDescriptionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	// +kubebuilder:validation:Required
+
 	Infrastructure []DescriptionSpec `json:"infrastructure,omitempty"`
-	// +kubebuilder:validation:Required
+
 	Software []DescriptionSpec `json:"software,omitempty"`
 }
 

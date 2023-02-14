@@ -38,18 +38,20 @@ spec:
               blueprint:
                 description: Blueprint refer to another blueprint
                 items:
-                  description: Content of Blueprint Packages
+                  description: Blueprint Spec of Cluster Resource referred
                   properties:
                     name:
-                      description: Name of Blueprint
+                      description: Name of kind Blueprint
                       type: string
-                    override:
-                      additionalProperties:
-                        type: string
-                      description: Override field of blueprint
-                      type: object
-                    spec:
-                      description: Spec
+                    revision:
+                      description: Revision of Blueprint
+                      type: string
+                    type:
+                      description: Type Blueprint
+                      type: string
+                    version:
+                      description: Published Version of Blueprint
+                      type: string
                   type: object
                 type: array
               values:

@@ -39,11 +39,11 @@ type BlueprintInfoSpec struct {
 // Content of Blueprint Packages
 type BlueprintInfo struct {
 	// Name of Blueprint
-	// +kubebuilder:validation:Required
+
 	Name string `json:"name,omitempty"`
 	// Spec
-	// +kubebuilder:validation:Required
-	Spec BlueprintSpec `json:"spec,omitempty"`
+
+	Spec BlueprintInfoSpec `json:"spec,omitempty"`
 	// Override field of blueprint
 	// +kubebuilder:validation:Optional
 	Override map[string]string `json:"override,omitempty"`
@@ -55,8 +55,8 @@ type BlueprintInfoList struct {
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	Infrastructure BlueprintInfoList `json:"infrastructure,omitempty"`
-	Software       BlueprintInfoList `json:"software,omitempty"`
+	Infrastructure []BlueprintInfo `json:"infrastructure,omitempty"`
+	Software       []BlueprintInfo `json:"software,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster
