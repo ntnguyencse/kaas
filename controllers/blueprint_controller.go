@@ -81,10 +81,11 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else {
 		logger.Info("Print blue print: %s\n", "blueprint", bp, "Blueprint Name: %s\n", bp.Name)
 		filecontent, err := jsonclassic.Marshal(bp)
+		// content, err := r.s.Encode()
 		if err != nil {
 			logger.Error(err, "unable to Decode Json file")
 		} else {
-			gitClient.CommitNewFile(bp.Name+".yaml", "main", "blueprint/", filecontent)
+			gitClient.UpdateFile(ctx, bp.Name+".yaml", "blueprint/", filecontent)
 		}
 
 	}
