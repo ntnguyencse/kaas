@@ -7,15 +7,16 @@ metadata:
     app.kubernetes.io/part-of: kubernetes-as-a-service
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: kubernetes-as-a-service
-  name: blueprint-sample@v1
+  name: blueprint-sample-v1
   namespace: blueprints
+  version: v1
 spec:
   # TODO(user): Add fields here
   blueprint: 
       - clusterapi:
           name: clusterapi-resource-template-default@v1
           type: ClusterAPITemplate
-          revision: 1.0.0
+          revision: 1
   values:
       kubernetesVersion: v1.24.8
       controlPlaneMachineCount: "1"
