@@ -20,10 +20,12 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/go-logr/logr"
 	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
 )
 
@@ -31,6 +33,8 @@ import (
 type ClusterReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	l      logr.Logger
+	s      *json.Serializer
 }
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -47,8 +51,8 @@ type ClusterReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
-
+	r.l = log.FromContext(ctx)
+	r.l.Info("Reconciling.... CLuster")
 	// TODO(user): your logic here
 
 	return ctrl.Result{}, nil

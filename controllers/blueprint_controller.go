@@ -36,6 +36,10 @@ type BlueprintReconciler struct {
 	s      *json.Serializer
 }
 
+var (
+	logger = ctrl.Log.WithName("Test")
+)
+
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=blueprints,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=blueprints/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=blueprints/finalizers,verbs=update
@@ -51,18 +55,24 @@ type BlueprintReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.l = log.FromContext(ctx)
-	pd, err := r.startRequest(ctx, req)
+	r.l.Info("Reconciling.... Blueprint")
+	r.l.Info("Getting blueprints....")
+	var blueprintList intentv1.BlueprintList
+	err := r.Client.List(ctx, &blueprintList)
 	if err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			r.l.Error(err, "cannot get pd")
-			return ctrl.Result{}, err
-		}
-		r.l.Info("cannot get resource, probably deleted", "error", err.Error())
-		r.l.Error(err, "Error when start Request Reconcile function", "error")
-		return ctrl.Result{}, nil
+		r.l.Error(err, "Error when list Blueprints", "error")
+
 	}
-	// TODO(user): your logic here
-	r.l.Info("Print Object", pd.Name)
+	var bp intentv1.Blueprint
+	err = r.Get(ctx, req.NamespacedName, &bp)
+
+	if err != nil {
+		logger.Error(err, "unable to fetch PackageDeployment")
+	} else {
+		logger.Info("Print blue print: ", "blueprint", bp, "Blueprint Name: ", bp.Name)
+		logger.Info("Label: ", "Label", bp.GetLabels()["app.kubernetes.io/name"])
+	}
+	// // TODO(user): your logic here
 	return ctrl.Result{}, nil
 }
 
@@ -71,15 +81,4 @@ func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&intentv1.Blueprint{}).
 		Complete(r)
-}
-
-func (r *BlueprintReconciler) startRequest(ctx context.Context, req ctrl.Request) (*intentv1.Blueprint, error) {
-	r.l = log.FromContext(ctx)
-	r.l.Info("Start Request: Get Blueprint", "req", req)
-	var blueprints intentv1.Blueprint
-	if err := r.Get(ctx, req.NamespacedName, &blueprints); err != nil {
-		r.l.Error(err, "Unable to fetch Blueprint List from Kubernetes API Server")
-		return nil, err
-	}
-	return &blueprints, nil
 }
