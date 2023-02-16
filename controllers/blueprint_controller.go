@@ -61,7 +61,7 @@ var (
 func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.l = log.FromContext(ctx)
 	// Get all blueprint
-	gitClient, _ := git.NewClient(repo, owner, "", ctx)
+	githubclient, _ := git.NewClient(repo, owner, "", ctx)
 	logger.Info("Reconciling.... Blueprint\n")
 	var blueprintList intentv1.BlueprintList
 	err := r.Client.List(ctx, &blueprintList)
@@ -80,12 +80,28 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		logger.Error(err, "unable to fetch PackageDeployment")
 	} else {
 		logger.Info("Print blue print: %s\n", "blueprint", bp, "Blueprint Name: %s\n", bp.Name)
-		filecontent, err := jsonclassic.Marshal(bp)
-		// content, err := r.s.Encode()
+		// filecontent, err := jsonclassic.Marshal(bp)
+		// // content, err := r.s.Encode()
+		// if err != nil {
+		// 	logger.Error(err, "unable to Decode Json file")
+		// } else {
+		// 	gitClient.UpdateFile(bp.Name+".yaml", "blueprint/", filecontent)
+		// }
+		var bp1 intentv1.Blueprint
+		err := jsonclassic.Unmarshal([]byte(bp.ObjectMeta.Annotations["kubectl.kubernetes.io/last-applied-configuration"]), &bp1)
 		if err != nil {
-			logger.Error(err, "unable to Decode Json file")
+			logger.Error(err, "Error when convert object")
 		} else {
-			gitClient.UpdateFile(ctx, bp.Name+".yaml", "blueprint/", filecontent)
+			logger.Info("Blueprint...", "blueprint", bp1)
+
+		}
+		content, err := jsonclassic.MarshalIndent(bp1, " ", "    ")
+		if err != nil {
+			logger.Error(err, "Error when marshal blueprint...")
+
+		} else {
+			logger.Info("Marshed blueprint:", "content", string(content))
+			githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
 		}
 
 	}

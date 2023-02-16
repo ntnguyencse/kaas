@@ -59,13 +59,13 @@ func (client *GitClient) GetFileHistory(fileName string, folder string) ([]*gith
 	return commits, err
 }
 
-func (client *GitClient) GetContentOfFile(ctx context.Context, fileName, folder string, ref string) (*github.RepositoryContent, error) {
+func (client *GitClient) GetContentOfFile(fileName, folder string, ref string) (*github.RepositoryContent, error) {
 	path := folder + fileName
 	var options github.RepositoryContentGetOptions
 	if ref != "" {
 		options.Ref = ref
 	}
-	content, _, _, err := client.client.Repositories.GetContents(ctx, client.owner, client.repo, path, &options)
+	content, _, _, err := client.client.Repositories.GetContents(context.TODO(), client.owner, client.repo, path, &options)
 	if err != nil {
 		client.logger.Error(err, "Get Content of file failed")
 	}
@@ -82,7 +82,7 @@ func (client *GitClient) UpdateFile(fileName, folder string, content []byte) err
 	}
 	// Update the file in the repository
 	updateOpts := &github.RepositoryContentFileOptions{
-		Message: github.String("Update file content"),
+		Message: github.String("Update file content: " + filePath),
 		Content: content,
 		SHA:     fileContent.SHA,
 	}
@@ -91,6 +91,55 @@ func (client *GitClient) UpdateFile(fileName, folder string, content []byte) err
 		client.logger.Error(err1, "Update File content failed")
 	}
 	return err1
+}
+func (client *GitClient) IsFileNotExist(fileName, folder string) (bool, error) {
+	path := folder + fileName
+	var options github.RepositoryContentGetOptions
+	_, _, resp, err := client.client.Repositories.GetContents(context.TODO(), client.owner, client.repo, path, &options)
+	if err != nil {
+		if resp.StatusCode == 404 {
+			return true, nil
+		} else {
+			return false, err
+		}
+	} else {
+		return false, nil
+	}
+}
+
+func (client *GitClient) IncreaseRevisionOfFile(fileName, folder string, newRevision, newSha string) error {
+	// filePathofRevision := folder + fileName + ".revision"
+	// Revision file is a .revision file type
+	// Increase revision will add 1 line to the end of revision with revison name and sha of the file
+	fileRevisonName := fileName + ".revision"
+	isRevisionFileNotExist, err := client.IsFileNotExist(fileRevisonName, folder)
+	if err != nil {
+		if isRevisionFileNotExist {
+			// Create new file Resivion
+			newcontent := newRevision + " " + newSha
+			_, err1 := client.CommitNewFile(fileRevisonName, "main", folder, []byte(newcontent))
+			if err1 != nil {
+				client.logger.Error(err1, "Error when create new revision file")
+				return err
+			}
+		}
+		client.logger.Error(err, "Error when check exist in increase revison file", "Error")
+		return err
+	}
+	// Update Revision file
+	contentRevisionFile, err := client.GetContentOfFile(fileRevisonName, folder, "")
+	if err != nil {
+		client.logger.Error(err, "Error when Get Content Revision of File", "FileName and Folder", fileName, folder)
+		return err
+	}
+	// Add new line to tracking revision file
+	newContent := *(contentRevisionFile.Content) + "\n" + newRevision + " " + newSha
+	err = client.UpdateFile(fileRevisonName, folder, []byte(newContent))
+	if err != nil {
+		client.logger.Error(err, "Error when update content of Revision File", "FileNam and Folder", fileName, folder)
+		return err
+	}
+	return nil
 }
 
 // func (client *GitClient) UpdateRevision(revision string, fileName string, folder string) error {
