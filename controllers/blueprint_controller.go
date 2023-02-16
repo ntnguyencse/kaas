@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"context"
+	jsonclassic "encoding/json"
 
 	"github.com/go-logr/logr"
 	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
+	git "github.com/ntnguyencse/intent-kaas/pkg/git"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,6 +37,9 @@ type BlueprintReconciler struct {
 	l      logr.Logger
 	s      *json.Serializer
 }
+
+const repo = "blueprints"
+const owner = "ntnguyen-dcn"
 
 var (
 	logger = ctrl.Log.WithName("Test")
@@ -55,13 +60,18 @@ var (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.l = log.FromContext(ctx)
-	r.l.Info("Reconciling.... Blueprint")
-	r.l.Info("Getting blueprints....")
+	// Get all blueprint
+	githubclient, _ := git.NewClient(repo, owner, "", ctx)
+	logger.Info("Reconciling.... Blueprint\n")
 	var blueprintList intentv1.BlueprintList
 	err := r.Client.List(ctx, &blueprintList)
 	if err != nil {
-		r.l.Error(err, "Error when list Blueprints", "error")
+		logger.Error(err, "Error when list Blueprints", "error")
 
+	}
+	logger.Info("Print List Blueorint:\n")
+	for _, item := range blueprintList.Items {
+		logger.Info("Item: ", item.Name, ".\n")
 	}
 	var bp intentv1.Blueprint
 	err = r.Get(ctx, req.NamespacedName, &bp)
@@ -69,10 +79,34 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		logger.Error(err, "unable to fetch PackageDeployment")
 	} else {
-		logger.Info("Print blue print: ", "blueprint", bp, "Blueprint Name: ", bp.Name)
-		logger.Info("Label: ", "Label", bp.GetLabels()["app.kubernetes.io/name"])
+		logger.Info("Print blue print: %s\n", "blueprint", bp, "Blueprint Name: %s\n", bp.Name)
+		// filecontent, err := jsonclassic.Marshal(bp)
+		// // content, err := r.s.Encode()
+		// if err != nil {
+		// 	logger.Error(err, "unable to Decode Json file")
+		// } else {
+		// 	gitClient.UpdateFile(bp.Name+".yaml", "blueprint/", filecontent)
+		// }
+		var bp1 intentv1.Blueprint
+		err := jsonclassic.Unmarshal([]byte(bp.ObjectMeta.Annotations["kubectl.kubernetes.io/last-applied-configuration"]), &bp1)
+		if err != nil {
+			logger.Error(err, "Error when convert object")
+		} else {
+			logger.Info("Blueprint...", "blueprint", bp1)
+
+		}
+		content, err := jsonclassic.MarshalIndent(bp1, " ", "    ")
+		if err != nil {
+			logger.Error(err, "Error when marshal blueprint...")
+
+		} else {
+			logger.Info("Marshed blueprint:", "content", string(content))
+			githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
+		}
+
 	}
 	// // TODO(user): your logic here
+
 	return ctrl.Result{}, nil
 }
 

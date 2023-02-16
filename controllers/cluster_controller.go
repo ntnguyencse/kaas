@@ -54,6 +54,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.l = log.FromContext(ctx)
 	r.l.Info("Reconciling.... CLuster")
 	// TODO(user): your logic here
+	// Get all blueprint
 
 	return ctrl.Result{}, nil
 }
