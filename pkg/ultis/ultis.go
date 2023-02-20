@@ -1,6 +1,8 @@
 package ultis
 
 import (
+	"strconv"
+
 	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
 )
 
@@ -111,5 +113,17 @@ func IsEqual(old, new *intentv1.Cluster) bool {
 	}
 
 	return true
+
+}
+func NewRevision(oldRevision string) string {
+	if oldRevision != "" {
+		return "r1"
+	} else {
+		var newRevision string = "r"
+		newRevisionNumber, _ := strconv.ParseInt(oldRevision[1:], 10, 0)
+		newRevisionNumber = newRevisionNumber + 1
+		revisionNumber := newRevision + strconv.FormatInt(newRevisionNumber, 10)
+		return revisionNumber
+	}
 
 }

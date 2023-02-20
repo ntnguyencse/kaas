@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const GH_Token = "ghp_"
+const GH_Token = "gh"
 const repo = "blueprints"
 const owner = "ntnguyen-dcn"
 const GithubBranch = "main"
@@ -72,13 +72,13 @@ func (client *GitClient) GetContentOfFile(fileName, folder string, ref string) (
 	return content, err
 }
 
-func (client *GitClient) UpdateFile(fileName, folder string, content []byte) error {
+func (client *GitClient) UpdateFile(fileName, folder string, content []byte) (*github.RepositoryContentResponse, error) {
 	filePath := folder + fileName
 	// Retrieve the current content of the file
 	fileContent, _, _, err := client.client.Repositories.GetContents(context.TODO(), owner, repo, filePath, &github.RepositoryContentGetOptions{})
 	if err != nil {
 		client.logger.Error(err, "Get File Info failed")
-		return err
+		return nil, err
 	}
 	// Update the file in the repository
 	updateOpts := &github.RepositoryContentFileOptions{
@@ -86,11 +86,12 @@ func (client *GitClient) UpdateFile(fileName, folder string, content []byte) err
 		Content: content,
 		SHA:     fileContent.SHA,
 	}
-	_, _, err1 := client.client.Repositories.UpdateFile(context.TODO(), owner, repo, filePath, updateOpts)
+	RpcontentResponse, _, err1 := client.client.Repositories.UpdateFile(context.TODO(), owner, repo, filePath, updateOpts)
 	if err1 != nil {
 		client.logger.Error(err1, "Update File content failed")
+		return nil, err1
 	}
-	return err1
+	return RpcontentResponse, err1
 }
 func (client *GitClient) IsFileNotExist(fileName, folder string) (bool, error) {
 	path := folder + fileName
