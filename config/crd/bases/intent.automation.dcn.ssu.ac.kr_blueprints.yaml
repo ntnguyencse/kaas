@@ -15,7 +15,28 @@ spec:
     singular: blueprint
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: Time duration since creation of Cluster
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: Cluster status
+      jsonPath: .status.status
+      name: Status
+      type: string
+    - description: SHA
+      jsonPath: .status.sha
+      name: SHA
+      type: string
+    - description: Repo
+      jsonPath: .status.repo
+      name: Repo
+      type: string
+    - description: Sync
+      jsonPath: .status.sync
+      name: Sync
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: Blueprint is the Schema for the blueprints API
@@ -63,19 +84,24 @@ spec:
             description: BlueprintStatus defines the observed state of Blueprint
             properties:
               repo:
+                description: Repo contains blueprint
                 type: string
               revision:
+                description: Revision of blueprint
                 type: string
               sha:
+                description: SHA of blueprint
                 type: string
               status:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
+                  this file Status of Blueprint'
                 type: string
               sync:
+                description: Sync status of Blueprint
                 type: string
               version:
+                description: Version of blueprint
                 type: string
             type: object
         type: object
