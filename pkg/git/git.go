@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const GH_Token = "ghp_"
+const GH_Token = "gh"
 const repo = "blueprints"
 const owner = "ntnguyen-dcn"
 const GithubBranch = "main"
@@ -23,15 +23,16 @@ type GitClient struct {
 	logger logr.Logger
 }
 
-func NewClient(repo, owner, token string, ctx context.Context) (GitClient, error) {
+func NewClient(repo1, owner1, token string, ctx context.Context) (GitClient, error) {
 	var client GitClient
-	client.repo = repo
-	client.owner = owner
+	client.repo = repo1
+	client.owner = owner1
 	if token == "" {
 		token = GH_Token
 	}
 	client.logger = ctrl.Log.WithName("Github Module: ")
 	client.client = github.NewTokenClient(ctx, token)
+	client.logger.Info("Github Client Info: ", client.repo, client.owner)
 	return client, nil
 }
 func (client *GitClient) CommitNewFile(fileName, branch, folder string, content []byte) (*github.RepositoryContentResponse, error) {
@@ -52,7 +53,7 @@ func (client *GitClient) CommitNewFile(fileName, branch, folder string, content 
 func (client *GitClient) GetFileHistory(fileName string, folder string) ([]*github.RepositoryCommit, error) {
 	filePath := folder + fileName
 
-	commits, _, err := client.client.Repositories.ListCommits(context.Background(), owner, repo, &github.CommitsListOptions{Path: filePath})
+	commits, _, err := client.client.Repositories.ListCommits(context.Background(), client.owner, client.repo, &github.CommitsListOptions{Path: filePath})
 	if err != nil {
 		client.logger.Error(err, "Get History file failed")
 	}
@@ -72,13 +73,13 @@ func (client *GitClient) GetContentOfFile(fileName, folder string, ref string) (
 	return content, err
 }
 
-func (client *GitClient) UpdateFile(fileName, folder string, content []byte) error {
+func (client *GitClient) UpdateFile(fileName, folder string, content []byte) (*github.RepositoryContentResponse, error) {
 	filePath := folder + fileName
 	// Retrieve the current content of the file
-	fileContent, _, _, err := client.client.Repositories.GetContents(context.TODO(), owner, repo, filePath, &github.RepositoryContentGetOptions{})
+	fileContent, _, _, err := client.client.Repositories.GetContents(context.TODO(), client.owner, client.repo, filePath, &github.RepositoryContentGetOptions{})
 	if err != nil {
 		client.logger.Error(err, "Get File Info failed")
-		return err
+		return nil, err
 	}
 	// Update the file in the repository
 	updateOpts := &github.RepositoryContentFileOptions{
@@ -86,17 +87,19 @@ func (client *GitClient) UpdateFile(fileName, folder string, content []byte) err
 		Content: content,
 		SHA:     fileContent.SHA,
 	}
-	_, _, err1 := client.client.Repositories.UpdateFile(context.TODO(), owner, repo, filePath, updateOpts)
+	RpcontentResponse, _, err1 := client.client.Repositories.UpdateFile(context.TODO(), client.owner, client.repo, filePath, updateOpts)
 	if err1 != nil {
 		client.logger.Error(err1, "Update File content failed")
+		return nil, err1
 	}
-	return err1
+	return RpcontentResponse, err1
 }
 func (client *GitClient) IsFileNotExist(fileName, folder string) (bool, error) {
 	path := folder + fileName
 	var options github.RepositoryContentGetOptions
 	_, _, resp, err := client.client.Repositories.GetContents(context.TODO(), client.owner, client.repo, path, &options)
 	if err != nil {
+		client.logger.Error(err, "Error")
 		if resp.StatusCode == 404 {
 			return true, nil
 		} else {
@@ -134,7 +137,7 @@ func (client *GitClient) IncreaseRevisionOfFile(fileName, folder string, newRevi
 	}
 	// Add new line to tracking revision file
 	newContent := *(contentRevisionFile.Content) + "\n" + newRevision + " " + newSha
-	err = client.UpdateFile(fileRevisonName, folder, []byte(newContent))
+	_, err = client.UpdateFile(fileRevisonName, folder, []byte(newContent))
 	if err != nil {
 		client.logger.Error(err, "Error when update content of Revision File", "FileNam and Folder", fileName, folder)
 		return err

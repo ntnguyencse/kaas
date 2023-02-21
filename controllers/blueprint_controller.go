@@ -42,7 +42,7 @@ const repo = "blueprints"
 const owner = "ntnguyen-dcn"
 
 var (
-	logger = ctrl.Log.WithName("Test")
+	logger = ctrl.Log.WithName("Blueprint Controller")
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=blueprints,verbs=get;list;watch;create;update;patch;delete
@@ -62,24 +62,24 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	r.l = log.FromContext(ctx)
 	// Get all blueprint
 	githubclient, _ := git.NewClient(repo, owner, "", ctx)
-	logger.Info("Reconciling.... Blueprint\n")
+	logger.V(0).Info("Reconciling.... Blueprint\n")
 	var blueprintList intentv1.BlueprintList
 	err := r.Client.List(ctx, &blueprintList)
 	if err != nil {
-		logger.Error(err, "Error when list Blueprints", "error")
+		logger.V(3).Error(err, "Error when list Blueprints", "error")
 
 	}
-	logger.Info("Print List Blueorint:\n")
+	logger.V(1).Info("Print List Blueorint:\n")
 	for _, item := range blueprintList.Items {
-		logger.Info("Item: ", item.Name, ".\n")
+		logger.V(3).Info("Item: ", item.Name, ".\n")
 	}
 	var bp intentv1.Blueprint
 	err = r.Get(ctx, req.NamespacedName, &bp)
 
 	if err != nil {
-		logger.Error(err, "unable to fetch PackageDeployment")
+		logger.V(3).Error(err, "unable to fetch PackageDeployment")
 	} else {
-		logger.Info("Print blue print: %s\n", "blueprint", bp, "Blueprint Name: %s\n", bp.Name)
+		logger.V(3).Info("Print blue print: %s\n", "blueprint", bp, "Blueprint Name: %s\n", bp.Name)
 		// filecontent, err := jsonclassic.Marshal(bp)
 		// // content, err := r.s.Encode()
 		// if err != nil {
@@ -89,19 +89,28 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// }
 		var bp1 intentv1.Blueprint
 		err := jsonclassic.Unmarshal([]byte(bp.ObjectMeta.Annotations["kubectl.kubernetes.io/last-applied-configuration"]), &bp1)
+
 		if err != nil {
-			logger.Error(err, "Error when convert object")
+			logger.V(3).Error(err, "Error when convert object")
 		} else {
-			logger.Info("Blueprint...", "blueprint", bp1)
+			logger.V(3).Info("Blueprint...", "blueprint", bp1)
 
 		}
 		content, err := jsonclassic.MarshalIndent(bp1, " ", "    ")
 		if err != nil {
-			logger.Error(err, "Error when marshal blueprint...")
+			logger.V(3).Error(err, "Error when marshal blueprint...")
 
 		} else {
-			logger.Info("Marshed blueprint:", "content", string(content))
-			githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
+			logger.V(3).Info("Marshed blueprint:", "content", string(content))
+			isYamlFileExist, err := githubclient.IsFileNotExist(bp1.Name+".yaml", "blueprints/")
+			if err == nil {
+				if !isYamlFileExist {
+					githubclient.UpdateFile(bp1.Name+".yaml", "blueprints/", content)
+				} else {
+					githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
+				}
+			}
+
 		}
 
 	}

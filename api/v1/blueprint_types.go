@@ -33,21 +33,33 @@ type BlueprintSpec struct {
 	Values     map[string]string   `json:"values,omitempty"`
 }
 
+// +kubebuilder:subresource:status
 // BlueprintStatus defines the observed state of Blueprint
 type BlueprintStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status   string `json:"status,omitempty"`
-	Sync     string `json:"sync,omitempty"`
-	SHA      string `json:"sha,omitempty"`
-	Repo     string `json:"repo,omitempty"`
-	Version  string `json:"version,omitempty"`
+	// Status of Blueprint
+	Status string `json:"status,omitempty"`
+	// Sync status of Blueprint
+	Sync string `json:"sync,omitempty"`
+	// SHA of blueprint
+	SHA string `json:"sha,omitempty"`
+	// Repo contains blueprint
+	Repo string `json:"repo,omitempty"`
+	// Version of blueprint
+	Version string `json:"version,omitempty"`
+	// Revision of blueprint
 	Revision string `json:"revision,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:pruning:PreserveUnknownFields
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Cluster"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status",description="Cluster status"
+// +kubebuilder:printcolumn:name="SHA",type="string",JSONPath=".status.sha",description="SHA"
+// +kubebuilder:printcolumn:name="Repo",type="string",JSONPath=".status.repo",description="Repo"
+// +kubebuilder:printcolumn:name="Sync",type="string",JSONPath=".status.sync",description="Sync"
 // Blueprint is the Schema for the blueprints API
 type Blueprint struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -63,17 +63,28 @@ type ClusterSpec struct {
 type ClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status   string `json:"status,omitempty"`
-	Sync     string `json:"sync,omitempty"`
-	SHA      string `json:"sha,omitempty"`
-	Repo     string `json:"repo,omitempty"`
-	Version  string `json:"version,omitempty"`
+	// Status of cluster
+	Status string `json:"status,omitempty"`
+	// Sync status of cluster
+	Sync string `json:"sync,omitempty"`
+	// SHA of cluster package
+	SHA string `json:"sha,omitempty"`
+	// Repo contains cluster package
+	Repo string `json:"repo,omitempty"`
+	// Version  of cluster package
+	Version string `json:"version,omitempty"`
+	// Revision of cluster package
 	Revision string `json:"revision,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:pruning:PreserveUnknownFields
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Cluster"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status",description="Cluster status"
+// +kubebuilder:printcolumn:name="SHA",type="string",JSONPath=".status.sha",description="SHA"
+// +kubebuilder:printcolumn:name="Repo",type="string",JSONPath=".status.repo",description="Repo"
+// +kubebuilder:printcolumn:name="Sync",type="string",JSONPath=".status.sync",description="Sync"
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -83,7 +94,8 @@ type Cluster struct {
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // ClusterList contains a list of Cluster
 type ClusterList struct {
