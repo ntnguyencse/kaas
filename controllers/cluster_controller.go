@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	jsonclassic "encoding/json"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,6 +61,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	gitclient1, err := git.NewClient("clusters", "ntnguyen-dcn", "", ctx)
 	if err != nil {
 		r.l.Error(err, "Error while create new Github client")
+		_ = gitclient1
 		return ctrl.Result{}, nil
 	}
 	r.l.Info("Reconciling.... CLuster")
@@ -79,109 +79,8 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		logger1.V(1).Info("There was an error getting the Deployment, so we'll retry later")
 		return ctrl.Result{}, err
 	}
-	contentLastAppliedConfigurationBytes := deploy.Annotations["kubectl.kubernetes.io/last-applied-configuration"]
-	logger1.V(1).Info("Print Deploy:", "Cluster", deploy)
-	var content intentv1.Cluster
-	err = jsonclassic.Unmarshal([]byte(contentLastAppliedConfigurationBytes), &content)
+	// Transform Cluster Resource to Cluster Description
 
-	if err != nil {
-		logger1.V(0).Info("Error when unmarshal cluster resource")
-	} else {
-		if len(deploy.ManagedFields) > 0 {
-			logger1.V(0).Info("ManagedField", deploy.ManagedFields[0].Manager, deploy.ManagedFields[0].Operation, deploy.ManagedFields[0].Time.String(), deploy.ManagedFields[0].APIVersion)
-		}
-	}
-	// Check status and sha, version, revision
-	logger1.Info("Print status of object:", "Status", deploy.Status.Status, deploy.Status.SHA, deploy.Status.Sync)
-
-	///////////////////////////================
-	logger1.Info("Print Before status of object:", "Status", deploy.Status.Status, deploy.Status.SHA, deploy.Status.Sync)
-	if deploy.Status.Status != "Reconciling" {
-		deploy.Status.Status = "Reconciling"
-		deploy.Status.Sync = "Not Synced"
-		deploy.Status.SHA = "SHA Tests"
-		err = r.Client.Status().Update(ctx, &deploy)
-		if err != nil {
-			logger1.V(0).Error(err, "Error while update status object Not Synced")
-			return ctrl.Result{}, err
-		}
-		var deploy1 intentv1.Cluster
-		err = r.Get(context.Background(), req.NamespacedName, &deploy1)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				// The Deployment has been deleted, so we don't need to do anything
-				logger1.V(1).Info("The Deployment has been deleted, so we don't need to do anything")
-				return ctrl.Result{}, nil
-			}
-			// There was an error getting the Deployment, so we'll retry later
-			logger1.V(1).Info("There was an error getting the Deployment, so we'll retry later")
-			return ctrl.Result{}, err
-		}
-		logger1.Info("Print status of object:", "Status", deploy1.Status.Status, deploy1.Status.SHA, deploy1.Status.Sync)
-
-	}
-
-	if false {
-		// if deploy.CreationTimestamp == *deploy.ManagedFields[0].Time {
-		if len(deploy.ObjectMeta.Labels["SHA"]) < 2 {
-			isFileNotExist, err := gitclient1.IsFileNotExist(deploy.Name+".yaml", "test/")
-			if err != nil {
-				logger1.Error(err, "Error while check file existing..")
-			} else {
-				content1, _ := jsonclassic.MarshalIndent(content, " ", "    ")
-				var sha string
-				if !isFileNotExist {
-					resp, err := gitclient1.UpdateFile(deploy.Name+".yaml", "test/", content1)
-					if err != nil {
-						logger1.V(0).Error(err, "Error whilde reconciling cluster resource. Update file")
-					} else {
-						sha = *resp.SHA
-						logger1.V(0).Info("Updated SHA", "SHA", sha)
-					}
-
-				} else {
-					resp, err := gitclient1.CommitNewFile(deploy.Name+".yaml", "main", "test/", content1)
-					if err != nil {
-						logger1.V(0).Error(err, "Error whilde reconciling cluster resource. Commit file")
-					} else {
-						sha = *resp.SHA
-						logger1.V(0).Info("Updated SHA", "SHA", sha)
-					}
-				}
-
-				deploy.ObjectMeta.Labels["SHA"] = sha
-				deploy.ObjectMeta.Labels["Sync"] = "Synced"
-				// deploy.Status.Status
-				err := r.Update(ctx, &deploy)
-				if err != nil {
-					logger1.V(0).Error(err, "Error while update status object Synced")
-					return ctrl.Result{}, err
-				}
-			}
-		} else {
-			// deploy.ObjectMeta.Labels["Sync"] = "UnSynced"
-			deploy.Status.Sync = "Not Synced"
-			err := r.Update(ctx, &deploy)
-			if err != nil {
-				logger1.V(0).Error(err, "Error while update status object Not Synced")
-				return ctrl.Result{}, err
-			}
-			var deploy1 intentv1.Cluster
-			err = r.Get(context.Background(), req.NamespacedName, &deploy1)
-			if err != nil {
-				if errors.IsNotFound(err) {
-					// The Deployment has been deleted, so we don't need to do anything
-					logger1.V(1).Info("The Deployment has been deleted, so we don't need to do anything")
-					return ctrl.Result{}, nil
-				}
-				// There was an error getting the Deployment, so we'll retry later
-				logger1.V(1).Info("There was an error getting the Deployment, so we'll retry later")
-				return ctrl.Result{}, err
-			}
-			logger1.Info("Print status of object:", "Status", deploy1.Status.Status, deploy1.Status.SHA, deploy1.Status.Sync)
-		}
-	}
-	// r.Status().Update()
 	return ctrl.Result{}, nil
 }
 
@@ -191,3 +90,113 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&intentv1.Cluster{}).
 		Complete(r)
 }
+
+// Draft
+// func test() {
+// 	var deploy intentv1.Cluster
+// 	gitclient1, err := git.NewClient("a", "a", "", context.TODO())
+// 	contentLastAppliedConfigurationBytes := deploy.Annotations["kubectl.kubernetes.io/last-applied-configuration"]
+// 	logger1.V(1).Info("Print Deploy:", "Cluster", deploy)
+// 	var content intentv1.Cluster
+// 	err = jsonclassic.Unmarshal([]byte(contentLastAppliedConfigurationBytes), &content)
+
+// 	if err != nil {
+// 		logger1.V(0).Info("Error when unmarshal cluster resource")
+// 	} else {
+// 		if len(deploy.ManagedFields) > 0 {
+// 			logger1.V(0).Info("ManagedField", deploy.ManagedFields[0].Manager, deploy.ManagedFields[0].Operation, deploy.ManagedFields[0].Time.String(), deploy.ManagedFields[0].APIVersion)
+// 		}
+// 	}
+// 	// Check status and sha, version, revision
+// 	logger1.Info("Print status of object:", "Status", deploy.Status.Status, deploy.Status.SHA, deploy.Status.Sync)
+
+// 	///////////////////////////================
+// 	logger1.Info("Print Before status of object:", "Status", deploy.Status.Status, deploy.Status.SHA, deploy.Status.Sync)
+// 	if deploy.Status.Status != "Reconciling" {
+// 		deploy.Status.Status = "Reconciling"
+// 		deploy.Status.Sync = "Not Synced"
+// 		deploy.Status.SHA = "SHA Tests"
+// 		// Update status of Kubernetes objects
+// 		// err = r.Client.Status().Update(ctx, &deploy)
+// 		if err != nil {
+// 			logger1.V(0).Error(err, "Error while update status object Not Synced")
+// 			// return ctrl.Result{}, err
+// 		}
+// 		var deploy1 intentv1.Cluster
+// 		// err = r.Get(context.Background(), req.NamespacedName, &deploy1)
+// 		if err != nil {
+// 			if errors.IsNotFound(err) {
+// 				// The Deployment has been deleted, so we don't need to do anything
+// 				logger1.V(1).Info("The Deployment has been deleted, so we don't need to do anything")
+// 				// return ctrl.Result{}, nil
+// 			}
+// 			// There was an error getting the Deployment, so we'll retry later
+// 			logger1.V(1).Info("There was an error getting the Deployment, so we'll retry later")
+// 			// return ctrl.Result{}, err
+// 		}
+// 		logger1.Info("Print status of object:", "Status", deploy1.Status.Status, deploy1.Status.SHA, deploy1.Status.Sync)
+
+// 	}
+
+// 	if false {
+// 		// if deploy.CreationTimestamp == *deploy.ManagedFields[0].Time {
+// 		if len(deploy.ObjectMeta.Labels["SHA"]) < 2 {
+// 			isFileNotExist, err := gitclient1.IsFileNotExist(deploy.Name+".yaml", "test/")
+// 			if err != nil {
+// 				logger1.Error(err, "Error while check file existing..")
+// 			} else {
+// 				content1, _ := jsonclassic.MarshalIndent(content, " ", "    ")
+// 				var sha string
+// 				if !isFileNotExist {
+// 					resp, err := gitclient1.UpdateFile(deploy.Name+".yaml", "test/", content1)
+// 					if err != nil {
+// 						logger1.V(0).Error(err, "Error whilde reconciling cluster resource. Update file")
+// 					} else {
+// 						sha = *resp.SHA
+// 						logger1.V(0).Info("Updated SHA", "SHA", sha)
+// 					}
+
+// 				} else {
+// 					resp, err := gitclient1.CommitNewFile(deploy.Name+".yaml", "main", "test/", content1)
+// 					if err != nil {
+// 						logger1.V(0).Error(err, "Error whilde reconciling cluster resource. Commit file")
+// 					} else {
+// 						sha = *resp.SHA
+// 						logger1.V(0).Info("Updated SHA", "SHA", sha)
+// 					}
+// 				}
+
+// 				deploy.ObjectMeta.Labels["SHA"] = sha
+// 				deploy.ObjectMeta.Labels["Sync"] = "Synced"
+// 				// deploy.Status.Status
+// 				// err := r.Update(ctx, &deploy)
+// 				if err != nil {
+// 					logger1.V(0).Error(err, "Error while update status object Synced")
+// 					// return ctrl.Result{}, err
+// 				}
+// 			}
+// 		} else {
+// 			// deploy.ObjectMeta.Labels["Sync"] = "UnSynced"
+// 			deploy.Status.Sync = "Not Synced"
+// 			// err := r.Update(ctx, &deploy)
+// 			if err != nil {
+// 				logger1.V(0).Error(err, "Error while update status object Not Synced")
+// 				// return ctrl.Result{}, err
+// 			}
+// 			var deploy1 intentv1.Cluster
+// 			// err = r.Get(context.Background(), req.NamespacedName, &deploy1)
+// 			if err != nil {
+// 				if errors.IsNotFound(err) {
+// 					// The Deployment has been deleted, so we don't need to do anything
+// 					logger1.V(1).Info("The Deployment has been deleted, so we don't need to do anything")
+// 					// return ctrl.Result{}, nil
+// 				}
+// 				// There was an error getting the Deployment, so we'll retry later
+// 				logger1.V(1).Info("There was an error getting the Deployment, so we'll retry later")
+// 				// return ctrl.Result{}, err
+// 			}
+// 			logger1.Info("Print status of object:", "Status", deploy1.Status.Status, deploy1.Status.SHA, deploy1.Status.Sync)
+// 		}
+// 	}
+// 	// r.Status().Update()
+// }
