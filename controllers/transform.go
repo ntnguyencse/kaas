@@ -36,7 +36,10 @@ func findInfoOfBluePrint(info intentv1.BlueprintInfo, listBP []intentv1.Blueprin
 	// Override map[string]string `json:"override,omitempty"`
 	// Layer 1 blueprint
 	for _, bp := range listBP {
-		if bp.Name == info.Name {
+		logger1.Info(info.Name, "findInfoOfBluePrint", bp.Name)
+
+		if bp.Name == info.Spec.Name {
+
 			// infoBP = bp.Spec.Values
 			// Get all data from blueprint
 			infoBP = merge2map(infoBP, bp.Spec.Values)
@@ -55,6 +58,7 @@ func findInforOfBlueprintSpec(inforSpec intentv1.BlueprintInfoSpec, listBP []int
 
 	var infoBP map[string]string
 	for _, bp := range listBP {
+		logger1.Info(inforSpec.Name, "findInforOfBlueprintSpec", bp.Name)
 		if bp.Name == inforSpec.Name {
 			infoBP = merge2map(infoBP, bp.Spec.Values)
 			return infoBP, nil

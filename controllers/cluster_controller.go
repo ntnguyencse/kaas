@@ -88,6 +88,8 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	// Transform
 
+	r.TransformClusterToClusterDescription(ctx, deploy, listBP.Items, &gitclient1)
+
 	return ctrl.Result{}, nil
 }
 
