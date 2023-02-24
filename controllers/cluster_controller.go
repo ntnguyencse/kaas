@@ -80,6 +80,13 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 	// Transform Cluster Resource to Cluster Description
+	// Get list blueprints
+	var listBP intentv1.BlueprintList
+	err = r.Client.List(ctx, &listBP)
+	if err != nil {
+		logger1.Error(err, "Error while list blueprints")
+	}
+	// Transform
 
 	return ctrl.Result{}, nil
 }
