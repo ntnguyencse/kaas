@@ -88,7 +88,20 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	// Transform
 
-	r.TransformClusterToClusterDescription(ctx, deploy, listBP.Items, &gitclient1)
+	clusterDes, err := r.TransformClusterToClusterDescription(ctx, deploy, listBP.Items, &gitclient1)
+	if err != nil {
+		logger1.Error(err, "Transform Cluster Failed")
+	} else {
+		logger1.Info("Applying cluster description")
+		err := r.Client.Create(ctx, &clusterDes)
+		// r.Client.
+		if err != nil {
+			logger1.Error(err, "Error while applying cluster resource")
+		} else {
+			logger1.Info("Applying successful")
+		}
+	}
+	logger1.Info("Cluster Description:", "value", clusterDes)
 
 	return ctrl.Result{}, nil
 }

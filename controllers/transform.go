@@ -11,21 +11,44 @@ func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Con
 	logger1.Info("Starting transform cluster to cluster description")
 	// Transform cluster
 	var clusterDescription intentv1.ClusterDescription
+	// Form a clusterDescription from cluster
+	clusterDescription.Name = clusterCR.Name
+	clusterDescription.Labels = clusterCR.Labels
+	clusterDescription.Annotations = clusterCR.Annotations
+	clusterDescription.Namespace = "clusters"
+	//
 	// Get list blueprint Infra
 	blueprintInfraInfos := clusterCR.Spec.Infrastructure
 	for _, bpInfra := range blueprintInfraInfos {
+
 		// Find all value of blueprint and nested blueprint
+		// Get all value of blueprint
 		valu, _ := findInfoOfBluePrint(bpInfra, listBluePrint)
+
+		desSpec := intentv1.DescriptionSpec{
+			BlueprintInfo: bpInfra,
+			Spec:          valu,
+		}
+		clusterDescription.Spec.Infrastructure = append(clusterDescription.Spec.Infrastructure, desSpec)
 		logger1.Info("Print value infra blueprint", "value", valu)
 	}
 	// Get list Blueprint Software
 	blueprintSoftware := clusterCR.Spec.Software
 
 	for _, bpSoftware := range blueprintSoftware {
+
+		// Get all value of blueprint
 		valu, _ := findInfoOfBluePrint(bpSoftware, listBluePrint)
+
+		desSpec := intentv1.DescriptionSpec{
+			BlueprintInfo: bpSoftware,
+			Spec:          valu,
+		}
+		clusterDescription.Spec.Infrastructure = append(clusterDescription.Spec.Infrastructure, desSpec)
 		logger1.Info("Print value software blueprint", "value", valu)
 	}
 	// r.Client.Get()
+
 	return clusterDescription, nil
 }
 func findInfoOfBluePrint(info intentv1.BlueprintInfo, listBP []intentv1.Blueprint) (map[string]string, error) {
