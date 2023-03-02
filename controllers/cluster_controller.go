@@ -18,7 +18,10 @@ package controllers
 
 import (
 	"context"
+	jsonclassic "encoding/json"
+	"strconv"
 
+	config "github.com/ntnguyencse/intent-kaas/pkg/config"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -43,6 +46,9 @@ var (
 	logger1 = ctrl.Log.WithName("Cluster Controller")
 )
 
+const NAMESPACE_DEFAULT string = "default"
+const STATUS_GENERATED string = "Generated"
+
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters/finalizers,verbs=update
@@ -57,8 +63,10 @@ var (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	// Load Configuration
+	configuration := config.LoadConfig(config.DEFAULT_CONFIG_PATH)
 	r.l = log.FromContext(ctx)
-	gitclient1, err := git.NewClient("clusters", "ntnguyen-dcn", "", ctx)
+	gitclient1, err := git.NewClient(configuration.ClusterRepo, configuration.Owner, configuration.GitHubToken, ctx)
 	if err != nil {
 		r.l.Error(err, "Error while create new Github client")
 		_ = gitclient1
@@ -67,41 +75,117 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	r.l.Info("Reconciling.... CLuster")
 	logger1.Info("Start reconciling Cluster Resource")
 
+	// CLuster Resource object get from Kubernetes API Server
 	var deploy intentv1.Cluster
 	err = r.Get(context.Background(), req.NamespacedName, &deploy)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// The Deployment has been deleted, so we don't need to do anything
-			logger1.V(1).Info("The Deployment has been deleted, so we don't need to do anything")
+			// The Cluster Resources has been deleted, so we need to delete the cluster resource description corresponding
+			logger1.V(1).Info("The Cluster Resources has been deleted, so we need to delete the cluster resource description corresponding")
+			/////
+			// TO-DO: Delete the cluster resource description
+			////
+			////
 			return ctrl.Result{}, nil
 		}
 		// There was an error getting the Deployment, so we'll retry later
 		logger1.V(1).Info("There was an error getting the Deployment, so we'll retry later")
 		return ctrl.Result{}, err
 	}
-	// Transform Cluster Resource to Cluster Description
-	// Get list blueprints
-	var listBP intentv1.BlueprintList
-	err = r.Client.List(ctx, &listBP)
-	if err != nil {
-		logger1.Error(err, "Error while list blueprints")
-	}
-	// Transform
 
-	clusterDes, err := r.TransformClusterToClusterDescription(ctx, deploy, listBP.Items, &gitclient1)
-	if err != nil {
-		logger1.Error(err, "Transform Cluster Failed")
+	// Check the revision of package (equal the generation of kubernetes objects)
+	// The generation of k8s object change means the metadata or the spec of k8s object change => detect change using the change of generation number of k8s object.
+	// Store the generation in status of object
+	var oldGeneration int64
+	if len(deploy.Status.Revision) < 1 || deploy.Status.Revision == "" {
+		oldGeneration = 0
 	} else {
-		logger1.Info("Applying cluster description")
-		err := r.Client.Create(ctx, &clusterDes)
-		// r.Client.
+		oldGeneration, err = strconv.ParseInt(deploy.Status.Revision, 10, 0)
 		if err != nil {
-			logger1.Error(err, "Error while applying cluster resource")
-		} else {
-			logger1.Info("Applying successful")
+			logger1.V(1).Error(err, "Error convert status Revision to Int64")
+			oldGeneration = 0
 		}
 	}
-	logger1.Info("Cluster Description:", "value", clusterDes)
+	if oldGeneration != deploy.Generation {
+		// Sync the change of cluster resource to github
+		// TO-DO: Sync the change to github
+		// Check is the new object or existing object
+		// Each file will store in separate folder name same name as namespace
+		fileName := deploy.Name + ".yaml"
+		fileFolderName := deploy.Namespace
+		if len(deploy.Namespace) < 1 {
+			fileFolderName = NAMESPACE_DEFAULT
+		}
+		// Get current content of kubernetes object
+		// That content was inside last-applied-configuration
+		contentLastAppliedConfigurationBytes := deploy.Annotations["kubectl.kubernetes.io/last-applied-configuration"]
+		var content intentv1.Cluster
+		err = jsonclassic.Unmarshal([]byte(contentLastAppliedConfigurationBytes), &content)
+		// Convert to pretty-print yaml file
+		content1, _ := jsonclassic.MarshalIndent(content, " ", "    ")
+		isFileExist, err := gitclient1.IsFileNotExist(fileName, fileFolderName)
+		var shaFile string
+		if err == nil {
+			if isFileExist {
+				result, err := gitclient1.CommitNewFile(fileName, git.GIT_MAINBRANCH, fileFolderName, content1)
+				if err != nil {
+					logger1.V(1).Error(err, "Error while commit a new file", "File name and folder name", fileName, fileFolderName)
+				} else {
+					shaFile = *result.SHA
+				}
+			} else {
+				result, err := gitclient1.UpdateFile(fileName, fileFolderName, content1)
+				if err != nil {
+					logger1.V(1).Error(err, "Error while Update a new file", "File name and folder name", fileName, fileFolderName)
+				} else {
+					shaFile = *result.SHA
+				}
+			}
+			//
+			deploy.Status.SHA = shaFile
+			deploy.Status.Sync = git.SYNCED_STATUS
+			deploy.Status.Repo = gitclient1.GetOwner() + "/" + gitclient1.GetRepoName()
+		} else {
+			logger1.V(1).Error(err, "Error while check file not existing", "File Name and folder:", fileName, fileFolderName)
+			deploy.Status.Sync = git.NOT_SYNC_STATUS
+		}
+
+		//----------------------------------------------//-------------------------------------------------------------------//
+
+		// Transform Cluster Resource to Cluster Description
+		// Get list blueprints
+		var listBP intentv1.BlueprintList
+		err = r.Client.List(ctx, &listBP)
+		if err != nil {
+			logger1.Error(err, "Error while list blueprints")
+		}
+		// Transform cluster Resource to Cluster Description Resources and apply to Kubernetes API Server
+
+		clusterDes, err := r.TransformClusterToClusterDescription(ctx, deploy, listBP.Items, &gitclient1)
+		if err != nil {
+			logger1.Error(err, "Transform Cluster Failed")
+		} else {
+			logger1.Info("Applying cluster description")
+			// Apply the Cluster Resource Description to Kubernetes API Server
+			err := r.Client.Create(ctx, &clusterDes)
+			// r.Client.
+			if err != nil {
+				logger1.Error(err, "Error while applying cluster resource")
+			} else {
+				logger1.Info("Applying successful")
+			}
+		}
+		logger1.Info("Cluster Description:", "value", clusterDes)
+
+		// Update status of kubernetes object
+		// Update Revision
+		deploy.Status.Revision = strconv.FormatInt(deploy.Generation, 10)
+		deploy.Status.Status = STATUS_GENERATED
+
+		// Update the changes to Kubernetes Server
+		r.Client.Update(ctx, &deploy)
+
+	}
 
 	return ctrl.Result{}, nil
 }

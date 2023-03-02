@@ -22,6 +22,7 @@ import (
 
 	"github.com/go-logr/logr"
 	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
+	config "github.com/ntnguyencse/intent-kaas/pkg/config"
 	git "github.com/ntnguyencse/intent-kaas/pkg/git"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -41,6 +42,8 @@ type BlueprintReconciler struct {
 const repo = "blueprints"
 const owner = "ntnguyen-dcn"
 
+// const config_path = "./config.yml"
+
 var (
 	logger = ctrl.Log.WithName("Blueprint Controller")
 )
@@ -59,9 +62,12 @@ var (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	// Load Configurations
+	configuration := config.LoadConfig(config.DEFAULT_CONFIG_PATH)
+
 	r.l = log.FromContext(ctx)
 	// Get all blueprint
-	githubclient, _ := git.NewClient(repo, owner, "", ctx)
+	githubclient, _ := git.NewClient(configuration.BlueprintRepo, configuration.Owner, configuration.GitHubToken, ctx)
 	logger.V(0).Info("Reconciling.... Blueprint\n")
 	var blueprintList intentv1.BlueprintList
 	err := r.Client.List(ctx, &blueprintList)

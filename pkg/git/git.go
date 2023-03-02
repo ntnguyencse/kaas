@@ -11,10 +11,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const GH_Token = "gh"
 const repo = "blueprints"
 const owner = "ntnguyen-dcn"
-const GithubBranch = "main"
+const GIT_MAINBRANCH = "main"
+const SYNCED_STATUS = "Synced"
+const NOT_SYNC_STATUS = "Not Sync"
 
 type GitClient struct {
 	repo   string
@@ -27,9 +28,6 @@ func NewClient(repo1, owner1, token string, ctx context.Context) (GitClient, err
 	var client GitClient
 	client.repo = repo1
 	client.owner = owner1
-	if token == "" {
-		token = GH_Token
-	}
 	client.logger = ctrl.Log.WithName("Github Module: ")
 	client.client = github.NewTokenClient(ctx, token)
 	client.logger.Info("Github Client Info: ", client.repo, client.owner)
@@ -153,11 +151,11 @@ func (client *GitClient) IncreaseRevisionOfFile(fileName, folder string, newRevi
 // =====================================================
 // Test client API part
 
-func CommitFile(filename string, content []byte) error {
+func (g *GitClient) CommitFile(filename string, content []byte) error {
 	logger := log.Log.WithName("Git modules")
 	logger.Info("Using git module...\n")
 	ctx := context.Background()
-	client := github.NewTokenClient(ctx, GH_Token)
+	client := github.NewTokenClient(ctx, "Github_TOken")
 	user, resp, err := client.Users.Get(ctx, "")
 	if err != nil {
 		logger.Error(err, "Error when auth with Github server\n")
@@ -186,12 +184,12 @@ func CommitFile(filename string, content []byte) error {
 	return nil
 }
 
-func GetFileHistory(filePath string) error {
+func (g *GitClient) GetFileHistory1(filePath string) error {
 	filePath = filePath + ".yaml"
 	logger := log.Log.WithName("Git modules")
 	logger.Info("Using git module...Get History\n")
 	ctx := context.Background()
-	client := github.NewTokenClient(ctx, GH_Token)
+	client := github.NewTokenClient(ctx, "Github_TOken")
 	// Retrieve the commit history for the file
 	commits, _, err := client.Repositories.ListCommits(context.Background(), owner, repo, &github.CommitsListOptions{Path: filePath})
 	if err != nil {
@@ -201,4 +199,11 @@ func GetFileHistory(filePath string) error {
 	logger.Info("List history:\n", "History", commits)
 	return nil
 
+}
+
+func (g *GitClient) GetRepoName() string {
+	return g.repo
+}
+func (g *GitClient) GetOwner() string {
+	return g.owner
 }

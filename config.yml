@@ -1,0 +1,4 @@
+owner: "ntnguyen-dcn"
+blueprintrepo: "blueprints"
+clusterrepo: "clusters"
+githubtoken: "your-github-token"
