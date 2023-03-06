@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	jsonclassic "encoding/json"
-	"strconv"
 
 	config "github.com/ntnguyencse/intent-kaas/pkg/config"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -97,15 +96,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// The generation of k8s object change means the metadata or the spec of k8s object change => detect change using the change of generation number of k8s object.
 	// Store the generation in status of object
 	var oldGeneration int64
-	if len(deploy.Status.Revision) < 1 || deploy.Status.Revision == "" {
+	if deploy.Status.Revision < 1 {
 		oldGeneration = 0
 	} else {
-		oldGeneration, err = strconv.ParseInt(deploy.Status.Revision, 10, 0)
-		if err != nil {
-			logger1.V(1).Error(err, "Error convert status Revision to Int64")
-			oldGeneration = 0
-		}
+		oldGeneration = deploy.Status.Revision
 	}
+	// Checking changes of cluster contents
 	if oldGeneration != deploy.Generation {
 		// Sync the change of cluster resource to github
 		// TO-DO: Sync the change to github
@@ -179,11 +175,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		// Update status of kubernetes object
 		// Update Revision
-		deploy.Status.Revision = strconv.FormatInt(deploy.Generation, 10)
+		deploy.Status.Revision = deploy.Generation
 		deploy.Status.Status = STATUS_GENERATED
 
 		// Update the changes to Kubernetes Server
 		r.Client.Update(ctx, &deploy)
+		return ctrl.Result{}, nil
 
 	}
 

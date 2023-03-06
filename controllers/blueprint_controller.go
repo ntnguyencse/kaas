@@ -24,6 +24,7 @@ import (
 	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
 	config "github.com/ntnguyencse/intent-kaas/pkg/config"
 	git "github.com/ntnguyencse/intent-kaas/pkg/git"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -75,37 +76,49 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		logger.V(3).Error(err, "Error when list Blueprints", "error")
 
 	}
-	logger.V(1).Info("Print List Blueorint:\n")
-	for _, item := range blueprintList.Items {
-		logger.V(3).Info("Item: ", item.Name, ".\n")
-	}
+
 	var bp intentv1.Blueprint
 	err = r.Get(ctx, req.NamespacedName, &bp)
-
 	if err != nil {
-		logger.V(3).Error(err, "unable to fetch PackageDeployment")
-	} else {
-		logger.V(3).Info("Print blue print: %s\n", "blueprint", bp, "Blueprint Name: %s\n", bp.Name)
-		// filecontent, err := jsonclassic.Marshal(bp)
-		// // content, err := r.s.Encode()
-		// if err != nil {
-		// 	logger.Error(err, "unable to Decode Json file")
-		// } else {
-		// 	gitClient.UpdateFile(bp.Name+".yaml", "blueprint/", filecontent)
-		// }
+		if errors.IsNotFound(err) {
+			// The Cluster Resources has been deleted, so we need to delete the cluster resource description corresponding
+			logger1.V(1).Info("The Blueprint has been deleted")
+			// Error. Not allow to delete blueprint
+			return ctrl.Result{}, nil
+		}
+		// There was an error getting the Deployment, so we'll retry later
+		logger1.V(1).Info("There was an error getting the Blueprint, so we'll retry later")
+		return ctrl.Result{}, err
+	}
+	if bp.Status.Revision < 1 {
+		// Commit new blueprint to github
 		var bp1 intentv1.Blueprint
 		err := jsonclassic.Unmarshal([]byte(bp.ObjectMeta.Annotations["kubectl.kubernetes.io/last-applied-configuration"]), &bp1)
 
 		if err != nil {
 			logger.V(3).Error(err, "Error when convert object")
-		} else {
-			logger.V(3).Info("Blueprint...", "blueprint", bp1)
-
 		}
 		content, err := jsonclassic.MarshalIndent(bp1, " ", "    ")
 		if err != nil {
 			logger.V(3).Error(err, "Error when marshal blueprint...")
+		} else {
+			logger.V(3).Info("Marshed blueprint:", "content", string(content))
+			githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
+		}
+		return ctrl.Result{}, nil
+	}
+	// Check if blueprint changes, commit the changes to github
+	if bp.Status.Revision != bp.Generation {
+		// Commit changes to github
+		var bp1 intentv1.Blueprint
+		err := jsonclassic.Unmarshal([]byte(bp.ObjectMeta.Annotations["kubectl.kubernetes.io/last-applied-configuration"]), &bp1)
 
+		if err != nil {
+			logger.V(3).Error(err, "Error when convert object")
+		}
+		content, err := jsonclassic.MarshalIndent(bp1, " ", "    ")
+		if err != nil {
+			logger.V(3).Error(err, "Error when marshal blueprint...")
 		} else {
 			logger.V(3).Info("Marshed blueprint:", "content", string(content))
 			isYamlFileExist, err := githubclient.IsFileNotExist(bp1.Name+".yaml", "blueprints/")
@@ -116,10 +129,10 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
 				}
 			}
-
 		}
-
+		return ctrl.Result{}, nil
 	}
+
 	// // TODO(user): your logic here
 
 	return ctrl.Result{}, nil

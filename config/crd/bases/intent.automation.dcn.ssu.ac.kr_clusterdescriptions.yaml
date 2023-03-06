@@ -112,11 +112,21 @@ spec:
           status:
             description: ClusterDescriptionStatus defines the observed state of ClusterDescription
             properties:
+              masterstatus:
+                description: Number of master node
+                type: integer
+              revision:
+                description: Revision of cluster description
+                format: int64
+                type: integer
               status:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 type: string
+              workerstatus:
+                description: Number of worker node
+                type: integer
             type: object
         type: object
         x-kubernetes-preserve-unknown-fields: true

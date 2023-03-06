@@ -74,7 +74,7 @@ type ClusterStatus struct {
 	// Version  of cluster package
 	Version string `json:"version,omitempty"`
 	// Revision of cluster package
-	Revision string `json:"revision,omitempty"`
+	Revision int64 `json:"revision,omitempty"`
 }
 
 // +kubebuilder:object:root=true

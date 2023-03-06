@@ -88,7 +88,8 @@ spec:
                 type: string
               revision:
                 description: Revision of blueprint
-                type: string
+                format: int64
+                type: integer
               sha:
                 description: SHA of blueprint
                 type: string

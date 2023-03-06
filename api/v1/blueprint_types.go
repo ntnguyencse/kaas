@@ -49,7 +49,7 @@ type BlueprintStatus struct {
 	// Version of blueprint
 	Version string `json:"version,omitempty"`
 	// Revision of blueprint
-	Revision string `json:"revision,omitempty"`
+	Revision int64 `json:"revision,omitempty"`
 }
 
 // +kubebuilder:object:root=true
