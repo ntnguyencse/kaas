@@ -104,6 +104,9 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		} else {
 			logger.V(3).Info("Marshed blueprint:", "content", string(content))
 			githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
+			bp1.Status.Revision = 1
+			bp1.Status.Sync = git.SYNCED_STATUS
+			r.Client.Update(ctx, &bp1)
 		}
 		return ctrl.Result{}, nil
 	}
@@ -128,6 +131,10 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				} else {
 					githubclient.CommitNewFile(bp1.Name+".yaml", "main", "blueprints/", content)
 				}
+				// Change status and update status
+				bp.Status.Revision = bp.Generation
+				bp.Status.Sync = git.SYNCED_STATUS
+				r.Client.Update(ctx, &bp)
 			}
 		}
 		return ctrl.Result{}, nil

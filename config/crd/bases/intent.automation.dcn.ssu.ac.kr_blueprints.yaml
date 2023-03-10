@@ -36,6 +36,10 @@ spec:
       jsonPath: .status.sync
       name: Sync
       type: string
+    - description: Revision
+      jsonPath: .status.revision
+      name: Revision
+      type: integer
     name: v1
     schema:
       openAPIV3Schema:

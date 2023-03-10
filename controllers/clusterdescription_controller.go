@@ -27,10 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	clusterctlclient "github.com/ntnguyencse/cluster-api-sdk/client"
-	kubernetesclient "github.com/ntnguyencse/cluster-api-sdk/kubernetes-client"
 	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
-	config "github.com/ntnguyencse/intent-kaas/pkg/config"
 )
 
 // ClusterDescriptionReconciler reconciles a ClusterDescription object
@@ -58,7 +55,7 @@ func (r *ClusterDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.R
 	r.l = log.FromContext(ctx)
 	r.l.Info("Reconciling.... CLusterDescription")
 	// Load Openstack configuration from file
-	openstackConfig := config.LoadOpenStackConfig(config.DEFAULT_OPENSTACKCONFIG_PATH)
+	// openstackConfig := config.LoadOpenStackConfig(config.DEFAULT_OPENSTACKCONFIG_PATH)
 
 	// CLuster Resource object get from Kubernetes API Server
 	var deploy intentv1.ClusterDescription
@@ -80,26 +77,26 @@ func (r *ClusterDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// Applying the changes of cluster description to openstack server
 	if deploy.Status.Revision != deploy.Generation {
 		// Create Kubernetes ctl client
-		var kubeconfigFile = "./admin.conf"
+		// var kubeconfigFile = "./admin.conf"
 		// clientset, _
-		_, _ = kubernetesclient.CreateKubernetesClient(&kubeconfigFile)
+		// _, _ = kubernetesclient.CreateKubernetesClient(&kubeconfigFile)
 		// Init the Openstack configuration map string
-		var configs = map[string]string{
-			"OPENSTACK_IMAGE_NAME":                   openstackConfig.OPENSTACK_IMAGE_NAME,
-			"OPENSTACK_EXTERNAL_NETWORK_ID":          openstackConfig.OPENSTACK_EXTERNAL_NETWORK_ID,
-			"OPENSTACK_DNS_NAMESERVERS":              openstackConfig.OPENSTACK_DNS_NAMESERVERS,
-			"OPENSTACK_SSH_KEY_NAME":                 openstackConfig.OPENSTACK_SSH_KEY_NAME,
-			"OPENSTACK_CLOUD_CACERT_B64":             openstackConfig.OPENSTACK_CLOUD_CACERT_B64,
-			"OPENSTACK_CLOUD_PROVIDER_CONF_B64":      openstackConfig.OPENSTACK_CLOUD_PROVIDER_CONF_B64,
-			"OPENSTACK_CLOUD_YAML_B64":               openstackConfig.OPENSTACK_CLOUD_YAML_B64,
-			"OPENSTACK_FAILURE_DOMAIN":               openstackConfig.OPENSTACK_FAILURE_DOMAIN,
-			"OPENSTACK_CLOUD":                        openstackConfig.OPENSTACK_CLOUD,
-			"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR": openstackConfig.OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR,
-			"OPENSTACK_NODE_MACHINE_FLAVOR":          openstackConfig.OPENSTACK_NODE_MACHINE_FLAVOR,
-		}
-		providerConfigs := clusterctlclient.CreateProviderConfig(clusterctlclient.OPENSTACK, clusterctlclient.OPENSTACK_URL, clusterctlclient.InfrastructureProviderType)
+		// var configs = map[string]string{
+		// 	"OPENSTACK_IMAGE_NAME":                   openstackConfig.OPENSTACK_IMAGE_NAME,
+		// 	"OPENSTACK_EXTERNAL_NETWORK_ID":          openstackConfig.OPENSTACK_EXTERNAL_NETWORK_ID,
+		// 	"OPENSTACK_DNS_NAMESERVERS":              openstackConfig.OPENSTACK_DNS_NAMESERVERS,
+		// 	"OPENSTACK_SSH_KEY_NAME":                 openstackConfig.OPENSTACK_SSH_KEY_NAME,
+		// 	"OPENSTACK_CLOUD_CACERT_B64":             openstackConfig.OPENSTACK_CLOUD_CACERT_B64,
+		// 	"OPENSTACK_CLOUD_PROVIDER_CONF_B64":      openstackConfig.OPENSTACK_CLOUD_PROVIDER_CONF_B64,
+		// 	"OPENSTACK_CLOUD_YAML_B64":               openstackConfig.OPENSTACK_CLOUD_YAML_B64,
+		// 	"OPENSTACK_FAILURE_DOMAIN":               openstackConfig.OPENSTACK_FAILURE_DOMAIN,
+		// 	"OPENSTACK_CLOUD":                        openstackConfig.OPENSTACK_CLOUD,
+		// 	"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR": openstackConfig.OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR,
+		// 	"OPENSTACK_NODE_MACHINE_FLAVOR":          openstackConfig.OPENSTACK_NODE_MACHINE_FLAVOR,
+		// }
+		// providerConfigs := clusterctlclient.CreateProviderConfig(clusterctlclient.OPENSTACK, clusterctlclient.OPENSTACK_URL, clusterctlclient.InfrastructureProviderType)
 		// Create cluster ctl client
-		c, err := clusterctlclient.CreateNewClient(kubeconfigFile, configs, providerConfigs)
+		// _, _ = clusterctlclient.CreateNewClient(kubeconfigFile, configs, providerConfigs)
 	}
 
 	return ctrl.Result{}, nil
