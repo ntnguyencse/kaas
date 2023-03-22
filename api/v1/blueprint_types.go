@@ -49,7 +49,7 @@ type BlueprintStatus struct {
 	// Version of blueprint
 	Version string `json:"version,omitempty"`
 	// Revision of blueprint
-	Revision string `json:"revision,omitempty"`
+	Revision int64 `json:"revision,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -60,6 +60,7 @@ type BlueprintStatus struct {
 // +kubebuilder:printcolumn:name="SHA",type="string",JSONPath=".status.sha",description="SHA"
 // +kubebuilder:printcolumn:name="Repo",type="string",JSONPath=".status.repo",description="Repo"
 // +kubebuilder:printcolumn:name="Sync",type="string",JSONPath=".status.sync",description="Sync"
+// +kubebuilder:printcolumn:name="Revision",type="integer",JSONPath=".status.revision",description="Revision"
 // Blueprint is the Schema for the blueprints API
 type Blueprint struct {
 	metav1.TypeMeta   `json:",inline"`

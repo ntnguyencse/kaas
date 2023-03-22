@@ -74,7 +74,7 @@ type ClusterStatus struct {
 	// Version  of cluster package
 	Version string `json:"version,omitempty"`
 	// Revision of cluster package
-	Revision string `json:"revision,omitempty"`
+	Revision int64 `json:"revision,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -85,6 +85,7 @@ type ClusterStatus struct {
 // +kubebuilder:printcolumn:name="SHA",type="string",JSONPath=".status.sha",description="SHA"
 // +kubebuilder:printcolumn:name="Repo",type="string",JSONPath=".status.repo",description="Repo"
 // +kubebuilder:printcolumn:name="Sync",type="string",JSONPath=".status.sync",description="Sync"
+// +kubebuilder:printcolumn:name="Revision",type="integer",JSONPath=".status.revision",description="Revision"
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`

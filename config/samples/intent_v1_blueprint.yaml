@@ -13,12 +13,10 @@ metadata:
 spec:
   # TODO(user): Add fields here
   blueprint: 
-      - {
-          name: clusterapi-resource-template-default,
-          version: v1,
-          type: ClusterAPITemplate,
-          revision: 1.0.0
-      }
+      - name: clusterapi-resource-template-default
+        version: v1
+        type: ClusterAPITemplate
+        revision: 1.0.0
   values:
       kubernetesVersion: v1.24.8
       controlPlaneMachineCount: "1"

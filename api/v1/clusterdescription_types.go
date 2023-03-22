@@ -47,6 +47,12 @@ type ClusterDescriptionStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status string `json:"status,omitempty"`
+	// Revision of cluster description
+	Revision int64 `json:"revision,omitempty"`
+	// Number of master node
+	MasterStatus int `json:"masterstatus,omitempty"`
+	// Number of worker node
+	WorkerStatus int `json:"workerstatus,omitempty"`
 }
 
 // +kubebuilder:object:root=true

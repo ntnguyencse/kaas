@@ -36,6 +36,10 @@ spec:
       jsonPath: .status.sync
       name: Sync
       type: string
+    - description: Revision
+      jsonPath: .status.revision
+      name: Revision
+      type: integer
     name: v1
     schema:
       openAPIV3Schema:
@@ -123,7 +127,8 @@ spec:
                 type: string
               revision:
                 description: Revision of cluster package
-                type: string
+                format: int64
+                type: integer
               sha:
                 description: SHA of cluster package
                 type: string

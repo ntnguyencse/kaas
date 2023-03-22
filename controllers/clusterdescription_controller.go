@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -53,7 +54,50 @@ type ClusterDescriptionReconciler struct {
 func (r *ClusterDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.l = log.FromContext(ctx)
 	r.l.Info("Reconciling.... CLusterDescription")
-	// TODO(user): your logic here
+	// Load Openstack configuration from file
+	// openstackConfig := config.LoadOpenStackConfig(config.DEFAULT_OPENSTACKCONFIG_PATH)
+
+	// CLuster Resource object get from Kubernetes API Server
+	var deploy intentv1.ClusterDescription
+	err := r.Get(context.Background(), req.NamespacedName, &deploy)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// The Cluster Resources has been deleted, so we need to delete the cluster resource description corresponding
+			logger1.V(1).Info("The Cluster Description has been deleted, so we need to delete the physical cluster corresponding")
+			/////
+			// TO-DO: Delete the physical cluster
+			////
+			////
+			return ctrl.Result{}, nil
+		}
+		// There was an error getting the Deployment, so we'll retry later
+		logger1.V(1).Info("There was an error getting the Cluster Description, so we'll retry later")
+		return ctrl.Result{}, err
+	}
+	// Applying the changes of cluster description to openstack server
+	if deploy.Status.Revision != deploy.Generation {
+		// Create Kubernetes ctl client
+		// var kubeconfigFile = "./admin.conf"
+		// clientset, _
+		// _, _ = kubernetesclient.CreateKubernetesClient(&kubeconfigFile)
+		// Init the Openstack configuration map string
+		// var configs = map[string]string{
+		// 	"OPENSTACK_IMAGE_NAME":                   openstackConfig.OPENSTACK_IMAGE_NAME,
+		// 	"OPENSTACK_EXTERNAL_NETWORK_ID":          openstackConfig.OPENSTACK_EXTERNAL_NETWORK_ID,
+		// 	"OPENSTACK_DNS_NAMESERVERS":              openstackConfig.OPENSTACK_DNS_NAMESERVERS,
+		// 	"OPENSTACK_SSH_KEY_NAME":                 openstackConfig.OPENSTACK_SSH_KEY_NAME,
+		// 	"OPENSTACK_CLOUD_CACERT_B64":             openstackConfig.OPENSTACK_CLOUD_CACERT_B64,
+		// 	"OPENSTACK_CLOUD_PROVIDER_CONF_B64":      openstackConfig.OPENSTACK_CLOUD_PROVIDER_CONF_B64,
+		// 	"OPENSTACK_CLOUD_YAML_B64":               openstackConfig.OPENSTACK_CLOUD_YAML_B64,
+		// 	"OPENSTACK_FAILURE_DOMAIN":               openstackConfig.OPENSTACK_FAILURE_DOMAIN,
+		// 	"OPENSTACK_CLOUD":                        openstackConfig.OPENSTACK_CLOUD,
+		// 	"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR": openstackConfig.OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR,
+		// 	"OPENSTACK_NODE_MACHINE_FLAVOR":          openstackConfig.OPENSTACK_NODE_MACHINE_FLAVOR,
+		// }
+		// providerConfigs := clusterctlclient.CreateProviderConfig(clusterctlclient.OPENSTACK, clusterctlclient.OPENSTACK_URL, clusterctlclient.InfrastructureProviderType)
+		// Create cluster ctl client
+		// _, _ = clusterctlclient.CreateNewClient(kubeconfigFile, configs, providerConfigs)
+	}
 
 	return ctrl.Result{}, nil
 }
