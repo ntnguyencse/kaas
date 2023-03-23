@@ -25,3 +25,10 @@ Advantages compared to Cluster API:
 * Based on GitOps supports, taking advantage of git for management from Day 0 through Day 2.
 * Reuse and integrate existing ecosystems (Cluster API,..) rather than duplicating their functionality. 
 * Simplifying and uniform automation all the way to onboarding, the complexity of provisioning and managing a multi-provider, multi-site deployment of underlying cloud infrastructure or distributed cloud, getting rid of all complex configurations
+
+## Logical Cluster Provider
+See [Logical Cluster Provider](/docs/design/logical-cluster-provider.md)
+## Logical Cluster Controlplane Provider
+See [Logical Cluster Controlplane Provider](/docs/design/logical-cluster-controlplane-provider.md)
+## L-KaaS's CRDs
+Abour CRDs, see [L-KaaS CRDs](crds.md)
