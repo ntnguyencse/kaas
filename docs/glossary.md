@@ -1,5 +1,5 @@
 # Glossary
-
+This glossary is intended to help clarify our usage of L-KaaS terms.
 ### Logical Cluster:
 * A “Logical Cluster” is the declarative spec for a group of Kubernetes clusters that form a multiple cluster environment (e.g. multiple clusters live in different locations for serving users). If a logical cluster object is created, a “Logical Cluster Provider” will provide and set up clusters as new clusters matching the spec. If the Logical cluster’s spec is updated, the provider reconciles the new state of clusters to match the new spec. If a “Logical Cluster” is deleted, its underlying infrastructure will be deleted by provider. 
 * “Logical Cluster” works similarly to Kubernetes Deployment and “Cluster” works similarly to Kubernetes Pod.  

@@ -34,7 +34,7 @@
 ## Concept of L-KaaS:
 All definition and concept of L-KaaS can be found in [Glossary](glossary.md)
 
-## L-KaaS Design 
+## L-KaaS Design and Architecture
 An overview of the [Design of L-KaaS](design/architecture.md)
 
 ## Example:

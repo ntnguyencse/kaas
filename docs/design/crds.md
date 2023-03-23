@@ -5,6 +5,8 @@ There are 4 kinds of Custom Resources:
 * Cluster Resources:
 * Infrastructure Profile Resources:
 
+Examples of Custom Resource: [Sample Custom Resource](/docs/sample/)
+
 `Logical Cluster`, `Cluster`, `Cluster Catalog`, and `Infrastructure Profile` are consumed by `Logical Cluster Provider`.
 
 ## Logical Clusters
@@ -13,7 +15,7 @@ A “Logical Cluster” is the declarative spec for a group of Kubernetes cluste
 Logical Cluster CR contains definitions, policies, and metadata (location, labels,..) of each member cluster. Logical cluster is used to create a multiple and reconcile a stable set of Kubernetes clusters running at any given time.
 
 `Logical Cluster` works similarly to `Kubernetes Deployment` and `Cluster` works similarly to `Kubernetes Pod`.
-
+ 
 ## Clusters
 `Cluster` resoure is a resource that only contains high-level configuration parts (Infrastructure Profile). Example: 
 * Location, Placement. 

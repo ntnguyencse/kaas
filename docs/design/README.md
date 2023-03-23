@@ -31,4 +31,4 @@ See [Logical Cluster Provider](/docs/design/logical-cluster-provider.md)
 ## Logical Cluster Controlplane Provider
 See [Logical Cluster Controlplane Provider](/docs/design/logical-cluster-controlplane-provider.md)
 ## L-KaaS's CRDs
-Abour CRDs, see [L-KaaS CRDs](crds.md)
+About CRDs, see [L-KaaS CRDs](crds.md)
