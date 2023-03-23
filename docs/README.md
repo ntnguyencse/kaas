@@ -31,11 +31,16 @@
 * Simplifying and uniform automation all the way to onboarding, the complexity of provisioning and managing a multi-provider, multi-site deployment of underlying cloud infrastructure or distributed cloud, getting rid of all complex configurations
 
 
-## Concept of L-KaaS [Glossary](glossary.md)
+## Concept of L-KaaS:
+All definition and concept of L-KaaS can be found in [Glossary](glossary.md)
 
-## An overview of the [Design of L-KaaS](design/architecture.md)
+## L-KaaS Design 
+An overview of the [Design of L-KaaS](design/architecture.md)
 
-## Example files and use case [Sample](sample/)
+## Example:
+All example files and use case in [Sample](sample/)
 
-## The [L-KaaS command line interface](user-guide/lkaasctl.md) is a detailed reference on the `lkaasctl` CLI.
-## The [User Guide](user-guide/) is for `administrator` who wants to use `L-KaaS` to manage `Logical Cluster`.
+## L-KaaS CLI/GUI
+The [L-KaaS command line interface](user-guide/lkaasctl.md) is a detailed reference on the `lkaasctl` CLI.
+## L-KaaS User Guide
+The [User Guide](user-guide/) is for `administrator` who wants to use `L-KaaS` to manage `Logical Cluster` or `Cluster`.
