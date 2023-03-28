@@ -35,4 +35,18 @@ resources:
   kind: Blueprint
   path: github.com/ntnguyencse/intent-kaas/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: automation.dcn.ssu.ac.kr
+  group: intent
+  kind: LogicalCluster
+  path: github.com/ntnguyencse/intent-kaas/api/v1
+  version: v1
+- controller: true
+  domain: automation.dcn.ssu.ac.kr
+  group: intent
+  kind: LogicalClusterControlPlaneProvider
+  version: v1
 version: "3"
