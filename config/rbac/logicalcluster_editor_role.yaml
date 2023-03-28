@@ -1,0 +1,31 @@
+# permissions for end users to edit logicalclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: logicalcluster-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: kubernetes-as-a-service
+    app.kubernetes.io/part-of: kubernetes-as-a-service
+    app.kubernetes.io/managed-by: kustomize
+  name: logicalcluster-editor-role
+rules:
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclusters/status
+  verbs:
+  - get

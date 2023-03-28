@@ -1,0 +1,12 @@
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: LogicalCluster
+metadata:
+  labels:
+    app.kubernetes.io/name: logicalcluster
+    app.kubernetes.io/instance: logicalcluster-sample
+    app.kubernetes.io/part-of: kubernetes-as-a-service
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: kubernetes-as-a-service
+  name: logicalcluster-sample
+spec:
+  # TODO(user): Add fields here
