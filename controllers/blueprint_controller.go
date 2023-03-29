@@ -21,9 +21,9 @@ import (
 	jsonclassic "encoding/json"
 
 	"github.com/go-logr/logr"
-	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
-	config "github.com/ntnguyencse/intent-kaas/pkg/config"
-	git "github.com/ntnguyencse/intent-kaas/pkg/git"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	config "github.com/ntnguyencse/L-KaaS/pkg/config"
+	git "github.com/ntnguyencse/L-KaaS/pkg/git"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"

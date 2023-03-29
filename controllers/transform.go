@@ -3,8 +3,8 @@ package controllers
 import (
 	"context"
 
-	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
-	"github.com/ntnguyencse/intent-kaas/pkg/git"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	"github.com/ntnguyencse/L-KaaS/pkg/git"
 )
 
 func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, listBluePrint []intentv1.Blueprint, gitClient *git.GitClient) (intentv1.ClusterDescription, error) {

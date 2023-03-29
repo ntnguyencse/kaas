@@ -20,7 +20,7 @@ import (
 	"context"
 	jsonclassic "encoding/json"
 
-	config "github.com/ntnguyencse/intent-kaas/pkg/config"
+	config "github.com/ntnguyencse/L-KaaS/pkg/config"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -29,8 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
-	"github.com/ntnguyencse/intent-kaas/pkg/git"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	"github.com/ntnguyencse/L-KaaS/pkg/git"
 )
 
 // ClusterReconciler reconciles a Cluster object
@@ -142,7 +142,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			deploy.Status.Sync = git.SYNCED_STATUS
 			deploy.Status.Repo = gitclient1.GetOwner() + "/" + gitclient1.GetRepoName()
 		} else {
-			logger1.V(1).Error(err, "Error while check file not existing", "File Name and folder:", fileName, fileFolderName)
+			logger1.V(1).Error(err, "Error while check file not existing", "File Name and folder:", fileFolderName+"/"+fileName)
 			deploy.Status.Sync = git.NOT_SYNC_STATUS
 		}
 

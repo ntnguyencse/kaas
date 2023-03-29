@@ -3,7 +3,7 @@ package ultis
 import (
 	"strconv"
 
-	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 )
 
 // var _ intentv1.Blueprint

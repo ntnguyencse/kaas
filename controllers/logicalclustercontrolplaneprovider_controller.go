@@ -20,9 +20,17 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	// capiv1beta1 "sigs.k8s.io/cluster-api/api/v1alpha4"
+
+	// Required for Watching
+	ctrl "sigs.k8s.io/controller-runtime"       // Required for Watching
+	"sigs.k8s.io/controller-runtime/pkg/client" // Required for Watching
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	// Required for Watching
+	"sigs.k8s.io/controller-runtime/pkg/reconcile" // Required for Watching
+	// Required for Watching
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -57,5 +65,18 @@ func (r *LogicalClusterControlPlaneProviderReconciler) SetupWithManager(mgr ctrl
 	return ctrl.NewControllerManagedBy(mgr).
 		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
 		// For().
+		// For(&capiv1beta1.Cluster{}).
+		For(&intentv1.Cluster{}).
+		// Watches(
+		// 	&source.Kind{Type: &capiv1beta1.ClusterClass{}},
+		// 	handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),
+		// ).
+		// Watches(
+		// 	&source.Kind{Type: &capiv1beta1.MachineDeployment{}},
+		// 	handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),
+		// ).
 		Complete(r)
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) findObjectsForConfigMap(configMap client.Object) []reconcile.Request {
+	return []reconcile.Request{}
 }

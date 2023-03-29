@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
-	"github.com/ntnguyencse/intent-kaas/controllers"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	"github.com/ntnguyencse/L-KaaS/controllers"
 	//+kubebuilder:scaffold:imports
 )
 

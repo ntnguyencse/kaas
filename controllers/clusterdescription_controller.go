@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 )
 
 // ClusterDescriptionReconciler reconciles a ClusterDescription object
