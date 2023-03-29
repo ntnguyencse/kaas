@@ -33,6 +33,7 @@ import (
 
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	"github.com/ntnguyencse/L-KaaS/controllers"
+	capiv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -45,6 +46,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(intentv1.AddToScheme(scheme))
+	utilruntime.Must(capiv1alpha4.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

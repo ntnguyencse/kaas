@@ -20,7 +20,7 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	// capiv1beta1 "sigs.k8s.io/cluster-api/api/v1alpha4"
+	capiv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
 
 	// Required for Watching
 	ctrl "sigs.k8s.io/controller-runtime"       // Required for Watching
@@ -30,7 +30,7 @@ import (
 	// Required for Watching
 	"sigs.k8s.io/controller-runtime/pkg/reconcile" // Required for Watching
 	// Required for Watching
-	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	// intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -66,7 +66,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) SetupWithManager(mgr ctrl
 		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
 		// For().
 		// For(&capiv1beta1.Cluster{}).
-		For(&intentv1.Cluster{}).
+		For(&capiv1alpha4.Cluster{}).
 		// Watches(
 		// 	&source.Kind{Type: &capiv1beta1.ClusterClass{}},
 		// 	handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),
