@@ -183,6 +183,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 
 	}
+	// Handle deletion reconciliation loop.
+	if !deploy.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.ReconcileDelete(ctx, &deploy)
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -303,3 +307,24 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // 	}
 // 	// r.Status().Update()
 // }
+
+func (r *ClusterReconciler) ReconcileNormal(ctx context.Context, cluster *intentv1.Cluster) (ctrl.Result, error) {
+	// TODO:
+	// Reconcile Normal
+
+	// Do not forget defer func (){}()
+	return ctrl.Result{}, nil
+}
+
+func (r *ClusterReconciler) ReconcileDelete(ctx context.Context, cluster *intentv1.Cluster) (ctrl.Result, error) {
+	// TODO
+	// Reconcile Delete
+	// Do not forget defer func
+
+	return ctrl.Result{}, nil
+}
+
+// Update/ Reconcile Phase of cluster
+func (r *ClusterReconciler) ReconcileClusterPhase(ctx context.Context, cluster *intentv1.Cluster) {
+
+}

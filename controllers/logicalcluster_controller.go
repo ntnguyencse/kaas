@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,9 +50,35 @@ type LogicalClusterReconciler struct {
 func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	// Get/ Fetch Cluster Instance Logical cluster
+	cluster := &intentv1.LogicalCluster{}
+	if err := r.Client.Get(ctx, req.NamespacedName, cluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			return ctrl.Result{}, nil
+		}
 
-	return ctrl.Result{}, nil
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
+	// Do something
+	// defer func() {}
+	defer func() {
+		// Always reconcile the Status.Phase field.
+		// Reconcile phase of logical cluster
+		r.ReconcileClusterPhase(ctx, cluster)
+	}()
+
+	// Handle deletion reconciliation loop.
+	if !cluster.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.ReconcileDelete(ctx, cluster)
+	}
+
+	// Handle normal reconciliation loop.
+	// return ctrl.Result{}, nil
+	return r.ReconcileNormal(ctx, req)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -59,4 +86,27 @@ func (r *LogicalClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&intentv1.LogicalCluster{}).
 		Complete(r)
+}
+
+// Update Phase of Logical Cluster
+func (r *LogicalClusterReconciler) ReconcileClusterPhase(ctx context.Context, cluster *intentv1.LogicalCluster) error {
+	return nil
+}
+
+func (r *LogicalClusterReconciler) ReconcileNormal(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+
+	// TODO(user): your logic here
+	return ctrl.Result{}, nil
+}
+
+func (r *LogicalClusterReconciler) ReconcileDelete(ctx context.Context, cluster *intentv1.LogicalCluster) (ctrl.Result, error) {
+
+	// TODO(user): your logic here
+	return ctrl.Result{}, nil
+}
+
+func (r *LogicalClusterReconciler) ReconcileCreate(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+
+	// TODO(user): your logic here
+	return ctrl.Result{}, nil
 }
