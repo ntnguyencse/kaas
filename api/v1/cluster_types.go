@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -57,6 +58,13 @@ type BlueprintInfoList struct {
 type ClusterSpec struct {
 	Infrastructure []BlueprintInfo `json:"infrastructure,omitempty"`
 	Software       []BlueprintInfo `json:"software,omitempty"`
+	// ClusterRef is a reference to a CAPI-specific cluster that holds the details
+	// for provisioning CAPI Cluster for a cluster in said provider.
+	// +optional
+	ClusterRef *corev1.ObjectReference `json:"clusterref,omitempty"`
+	// Paused can be used to prevent controllers from processing the Cluster and all its associated objects.
+	// +optional
+	Paused bool `json:"paused,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster

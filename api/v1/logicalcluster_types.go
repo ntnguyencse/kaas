@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,10 +33,15 @@ type LogicalClusterSpec struct {
 	Clusters []ClusterMember `json:"clusters,omitempty"`
 }
 type ClusterMember struct {
-	Name              string      `json:"name,omitempty"`
-	ClusterCatalog    string      `json:"clustercatalog,omitempty"`
-	Override          []string    `json:"override,omitempty"`
+	Name           string   `json:"name,omitempty"`
+	ClusterCatalog string   `json:"clustercatalog,omitempty"`
+	Override       []string `json:"override,omitempty"`
+	// Cluster member of logical cluster. Each cluster member associate with a physical cluster (CAPI)
+	//+optional
 	ClusterMemberSpec ClusterSpec `json:"spec,omitempty"`
+	// ClusterRef is a reference to a L-KaaS cluster that holds the details cluster
+	// +optional
+	ClusterRef *corev1.ObjectReference `json:"clusterref,omitempty"`
 }
 
 // LogicalClusterStatus defines the observed state of LogicalCluster
