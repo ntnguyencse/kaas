@@ -24,3 +24,14 @@ Dockerfile.cross
 *.swp
 *.swo
 *~
+
+# Ignore logs
+logs/
+
+# CAPI config
+config/capi
+# OpenStack config
+config/openstack
+
+# Test folder
+test/
