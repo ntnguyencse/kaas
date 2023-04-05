@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	intentv1 "github.com/ntnguyencse/intent-kaas/api/v1"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 )
 
 // LogicalClusterReconciler reconciles a LogicalCluster object

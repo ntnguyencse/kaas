@@ -83,3 +83,55 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclustercontrolplaneproviders
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclustercontrolplaneproviders/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclustercontrolplaneproviders/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - logicalclusters/status
+  verbs:
+  - get
+  - patch
+  - update

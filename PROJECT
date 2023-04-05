@@ -6,7 +6,7 @@ domain: automation.dcn.ssu.ac.kr
 layout:
 - go.kubebuilder.io/v3
 projectName: kubernetes-as-a-service
-repo: github.com/ntnguyencse/intent-kaas
+repo: github.com/ntnguyencse/L-KaaS
 resources:
 - api:
     crdVersion: v1
@@ -15,7 +15,7 @@ resources:
   domain: automation.dcn.ssu.ac.kr
   group: intent
   kind: Cluster
-  path: github.com/ntnguyencse/intent-kaas/api/v1
+  path: github.com/ntnguyencse/L-KaaS/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -24,7 +24,7 @@ resources:
   domain: automation.dcn.ssu.ac.kr
   group: intent
   kind: ClusterDescription
-  path: github.com/ntnguyencse/intent-kaas/api/v1
+  path: github.com/ntnguyencse/L-KaaS/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -33,7 +33,7 @@ resources:
   domain: automation.dcn.ssu.ac.kr
   group: intent
   kind: Blueprint
-  path: github.com/ntnguyencse/intent-kaas/api/v1
+  path: github.com/ntnguyencse/L-KaaS/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -42,7 +42,7 @@ resources:
   domain: automation.dcn.ssu.ac.kr
   group: intent
   kind: LogicalCluster
-  path: github.com/ntnguyencse/intent-kaas/api/v1
+  path: github.com/ntnguyencse/L-KaaS/api/v1
   version: v1
 - controller: true
   domain: automation.dcn.ssu.ac.kr
