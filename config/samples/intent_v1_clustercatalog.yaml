@@ -1,0 +1,12 @@
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: ClusterCatalog
+metadata:
+  labels:
+    app.kubernetes.io/name: clustercatalog
+    app.kubernetes.io/instance: clustercatalog-sample
+    app.kubernetes.io/part-of: kubernetes-as-a-service
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: kubernetes-as-a-service
+  name: clustercatalog-sample
+spec:
+  # TODO(user): Add fields here

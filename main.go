@@ -31,9 +31,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	capiv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
+
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	"github.com/ntnguyencse/L-KaaS/controllers"
-	capiv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -147,6 +148,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LogicalClusterControlPlaneProvider")
+		os.Exit(1)
+	}
+	if err = (&controllers.ClusterCatalogReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

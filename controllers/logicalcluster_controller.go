@@ -19,13 +19,14 @@ package controllers
 import (
 	"context"
 
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	capiulti "sigs.k8s.io/cluster-api/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 )
 
 // LogicalClusterReconciler reconciles a LogicalCluster object
@@ -109,4 +110,73 @@ func (r *LogicalClusterReconciler) ReconcileCreate(ctx context.Context, req ctrl
 
 	// TODO(user): your logic here
 	return ctrl.Result{}, nil
+}
+
+func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterName string) (intentv1.Cluster, error) {
+	cluster := intentv1.Cluster{}
+
+	// Step 1: Get the Clusters in CAPI
+	CAPIClusterList := intentv1.ClusterList{}
+	err := r.Client.List(ctx, &CAPIClusterList, client.InNamespace(lcluster.Namespace))
+	if err != nil {
+		logger.V(1).Error(err, "Error when get List CAPI Cluster")
+	}
+	// Step 2: If cluster is existed, add OwnerRef to existing cluster
+	existingCAPICluster := intentv1.Cluster{}
+	isAlreadyExist := false
+	for _, clster := range CAPIClusterList.Items {
+		if clster.Name == clusterName {
+			isAlreadyExist = true
+			existingCAPICluster = clster
+		}
+	}
+	if isAlreadyExist {
+		// Add OwnerRef to existing Cluster
+		// CAPI Cluster is owned by Logical Cluster
+		existingCAPICluster.SetOwnerReferences(capiulti.EnsureOwnerRef(existingCAPICluster.GetOwnerReferences(), metav1.OwnerReferences{
+			APIVersion: lcluster.APIVersion,
+			Kind:       lcluster.Kind,
+			Name:       lcluster.Name,
+			UID:        lcluster.UID,
+		}))
+		// Update to API Server
+		err := r.Client.Update(ctx, &existingCAPICluster)
+		if err != nil {
+			logger.Error(err, "Error when update OwnerRef of Cluster")
+		}
+	}
+	// Step 3: If cluster is not existed, create a new one
+	// Create new cluster
+	// If Cluster contain both of Catalog and Profile,
+	// We prioritize create Cluster with Profile
+
+	return cluster, nil
+}
+
+// Create Cluster from Cluster Catalog
+func (r *LogicalClusterReconciler) CreateClusterFromClusterCatalog(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterSpec *intentv1.ClusterMember) (intentv1.Cluster, error) {
+	newCluster := intentv1.Cluster{}
+	// Get Catalog
+	clusterCatalog := intentv1.ClusterCatalog{}
+	key := types.NamespacedName{Namespace: lcluster.Namespace, Name: clusterSpec.ClusterCatalog}
+	err := r.Client.Get(ctx, key, &clusterCatalog)
+	if err != nil {
+		logger.V(1).Error(err, "Error when get Cluster Catalog")
+		// Check which cause error
+		// Catalog does not exist...
+		return newCluster, err
+	}
+	// Create Cluster from Catalog
+	newCluster = intentv1.Cluster{
+		// TODO: Create Cluster from Catalog
+	}
+
+	return newCluster, nil
+}
+
+// Create Cluster from Cluster Profile
+func (r *LogicalClusterReconciler) CreateClusterFromClusterProfile(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterSpec *intentv1.ClusterMember) (intentv1.Cluster, error) {
+	newCluster := intentv1.Cluster{}
+
+	return newCluster, nil
 }
