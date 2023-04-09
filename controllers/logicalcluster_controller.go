@@ -19,9 +19,12 @@ package controllers
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/apimachinery/pkg/types"
 	capiulti "sigs.k8s.io/cluster-api/util"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,6 +36,8 @@ import (
 type LogicalClusterReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	l      logr.Logger
+	s      *json.Serializer
 }
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters,verbs=get;list;watch;create;update;patch;delete
@@ -133,7 +138,7 @@ func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lclus
 	if isAlreadyExist {
 		// Add OwnerRef to existing Cluster
 		// CAPI Cluster is owned by Logical Cluster
-		existingCAPICluster.SetOwnerReferences(capiulti.EnsureOwnerRef(existingCAPICluster.GetOwnerReferences(), metav1.OwnerReferences{
+		existingCAPICluster.SetOwnerReferences(capiulti.EnsureOwnerRef(existingCAPICluster.GetOwnerReferences(), metav1.OwnerReference{
 			APIVersion: lcluster.APIVersion,
 			Kind:       lcluster.Kind,
 			Name:       lcluster.Name,
@@ -150,6 +155,8 @@ func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lclus
 	// If Cluster contain both of Catalog and Profile,
 	// We prioritize create Cluster with Profile
 
+	// Check Cluster Member contains Catalog or not
+	// TODO: Check Catalog and Profile
 	return cluster, nil
 }
 
@@ -167,16 +174,95 @@ func (r *LogicalClusterReconciler) CreateClusterFromClusterCatalog(ctx context.C
 		return newCluster, err
 	}
 	// Create Cluster from Catalog
-	newCluster = intentv1.Cluster{
-		// TODO: Create Cluster from Catalog
-	}
 
+	// TODO: Create Cluster from Catalog
+	// Build a Cluster with profile pieces in Cluster Catalog
+	newCluster, err = r.BuildClusterObjectFromCatalog(ctx, lcluster, clusterSpec, &clusterCatalog)
+	if err != nil {
+		logger.Error(err, "Error when BuildClusterObjectFromCatalog")
+		return newCluster, err
+	}
 	return newCluster, nil
 }
 
 // Create Cluster from Cluster Profile
 func (r *LogicalClusterReconciler) CreateClusterFromClusterProfile(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterSpec *intentv1.ClusterMember) (intentv1.Cluster, error) {
 	newCluster := intentv1.Cluster{}
+	// Get Catalog
+	clusterCatalog := intentv1.ClusterCatalog{}
+	key := types.NamespacedName{Namespace: lcluster.Namespace, Name: clusterSpec.ClusterCatalog}
+	err := r.Client.Get(ctx, key, &clusterCatalog)
+	if err != nil {
+		logger.V(1).Error(err, "Error when get Cluster Catalog")
+		// Check which cause error
+		// Catalog does not exist...
+		return newCluster, err
+	}
+	// Create Cluster from Catalog
 
+	// TODO: Create Cluster from Catalog
+	// Build a Cluster with profile pieces in Cluster Catalog
+	newCluster, err = r.BuildClusterObjectFromProfile(ctx, lcluster, clusterSpec, &clusterCatalog)
+	if err != nil {
+		logger.Error(err, "Error when BuildClusterObjectFromProfile")
+		return newCluster, err
+	}
 	return newCluster, nil
+}
+
+func (r *LogicalClusterReconciler) BuildClusterObjectFromCatalog(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterMember *intentv1.ClusterMember, clusterCatalog *intentv1.ClusterCatalog) (intentv1.Cluster, error) {
+
+	// Get Profile from Catalog
+	clusterSpec := intentv1.ClusterSpec{
+		Infrastructure: clusterCatalog.Spec.Infrastructure,
+		Software:       clusterCatalog.Spec.Software,
+	}
+	// Construct a Object
+	clusterObject := intentv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: intentv1.GroupVersion.String(),
+			Kind:       "Cluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterMember.DeepCopy().Name,
+			Namespace: lcluster.DeepCopy().Namespace,
+			// OwnerRef from Logical cluster
+			OwnerReferences: []metav1.OwnerReference{*&metav1.OwnerReference{
+				APIVersion: lcluster.APIVersion,
+				Kind:       lcluster.DeepCopy().Kind,
+				Name:       lcluster.DeepCopy().Name,
+				UID:        lcluster.DeepCopy().UID,
+			}},
+		},
+		Spec: clusterSpec,
+	}
+	return clusterObject, nil
+}
+func (r *LogicalClusterReconciler) BuildClusterObjectFromProfile(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterMember *intentv1.ClusterMember, clusterCatalog *intentv1.ClusterCatalog) (intentv1.Cluster, error) {
+	// Get Profile from Catalog
+	clusterSpec := intentv1.ClusterSpec{
+		Infrastructure: clusterMember.ClusterMemberSpec.Infrastructure,
+		Software:       clusterMember.ClusterMemberSpec.Software,
+	}
+	// Construct a Object
+	clusterObject := intentv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: intentv1.GroupVersion.String(),
+			Kind:       "Cluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterMember.DeepCopy().Name,
+			Namespace: lcluster.DeepCopy().Namespace,
+			// OwnerRef from Logical cluster
+			OwnerReferences: []metav1.OwnerReference{*&metav1.OwnerReference{
+				APIVersion: lcluster.APIVersion,
+				Kind:       lcluster.DeepCopy().Kind,
+				Name:       lcluster.DeepCopy().Name,
+				UID:        lcluster.DeepCopy().UID,
+			}},
+		},
+		Spec: clusterSpec,
+	}
+	return clusterObject, nil
+
 }

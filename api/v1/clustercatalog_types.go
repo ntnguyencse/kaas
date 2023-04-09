@@ -20,31 +20,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ClusterCatalogSpec defines the desired state of ClusterCatalog
 type ClusterCatalogSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	Infrastructure []BlueprintInfo `json:"infrastructure,omitempty"`
-	Software       []BlueprintInfo `json:"software,omitempty"`
+	Infrastructure []ProfileInfo `json:"infrastructure,omitempty"`
+	Software       []ProfileInfo `json:"software,omitempty"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:pruning:PreserveUnknownFields
-// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Cluster"
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status",description="Cluster status"
-// +kubebuilder:printcolumn:name="SHA",type="string",JSONPath=".status.sha",description="SHA"
-// +kubebuilder:printcolumn:name="Repo",type="string",JSONPath=".status.repo",description="Repo"
-// +kubebuilder:printcolumn:name="Sync",type="string",JSONPath=".status.sync",description="Sync"
-// +kubebuilder:printcolumn:name="Revision",type="integer",JSONPath=".status.revision",description="Revision"
 // ClusterCatalogStatus defines the observed state of ClusterCatalog
 type ClusterCatalogStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	// Sync status of cluster
 	Sync string `json:"sync,omitempty"`
 	// SHA of cluster package
@@ -57,9 +40,8 @@ type ClusterCatalogStatus struct {
 	Revision int64 `json:"revision,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // ClusterCatalog is the Schema for the clustercatalogs API
 type ClusterCatalog struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -69,8 +51,7 @@ type ClusterCatalog struct {
 	Status ClusterCatalogStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-
+// +kubebuilder:object:root=true
 // ClusterCatalogList contains a list of ClusterCatalog
 type ClusterCatalogList struct {
 	metav1.TypeMeta `json:",inline"`

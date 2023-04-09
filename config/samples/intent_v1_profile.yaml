@@ -1,0 +1,12 @@
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    app.kubernetes.io/name: profile
+    app.kubernetes.io/instance: profile-sample
+    app.kubernetes.io/part-of: kubernetes-as-a-service
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: kubernetes-as-a-service
+  name: profile-sample
+spec:
+  # TODO(user): Add fields here

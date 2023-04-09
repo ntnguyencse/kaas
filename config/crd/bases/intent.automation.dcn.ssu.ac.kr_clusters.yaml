@@ -104,6 +104,7 @@ spec:
                   description: Content of Blueprint Packages
                   properties:
                     name:
+                      description: Name of Blueprint
                       type: string
                     override:
                       additionalProperties:
@@ -111,7 +112,7 @@ spec:
                       description: Override field of blueprint
                       type: object
                     spec:
-                      description: Blueprint Spec of Cluster Resource referred
+                      description: Spec
                       properties:
                         name:
                           description: Name of kind Blueprint
@@ -137,6 +138,7 @@ spec:
                   description: Content of Blueprint Packages
                   properties:
                     name:
+                      description: Name of Blueprint
                       type: string
                     override:
                       additionalProperties:
@@ -144,7 +146,7 @@ spec:
                       description: Override field of blueprint
                       type: object
                     spec:
-                      description: Blueprint Spec of Cluster Resource referred
+                      description: Spec
                       properties:
                         name:
                           description: Name of kind Blueprint
@@ -165,6 +167,15 @@ spec:
           status:
             description: ClusterStatus defines the observed state of Cluster
             properties:
+              failureMessage:
+                description: Failure Message
+                type: string
+              failureReason:
+                description: Failure Reason
+                type: string
+              ready:
+                description: Ready Status
+                type: boolean
               repo:
                 description: Repo contains cluster package
                 type: string
@@ -176,9 +187,7 @@ spec:
                 description: SHA of cluster package
                 type: string
               status:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file Status of cluster'
+                description: Status of cluster
                 type: string
               sync:
                 description: Sync status of cluster

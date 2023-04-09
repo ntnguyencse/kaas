@@ -22,7 +22,7 @@ import (
 )
 
 // Blueprint Spec of Cluster Resource referred
-type BlueprintInfoSpec struct {
+type ProfileInfoSpec struct {
 	// Name of kind Blueprint
 	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
@@ -38,26 +38,24 @@ type BlueprintInfoSpec struct {
 }
 
 // Content of Blueprint Packages
-type BlueprintInfo struct {
+type ProfileInfo struct {
 	// Name of Blueprint
-
 	Name string `json:"name,omitempty"`
 	// Spec
-
-	Spec BlueprintInfoSpec `json:"spec,omitempty"`
+	Spec ProfileInfoSpec `json:"spec,omitempty"`
 	// Override field of blueprint
 	// +kubebuilder:validation:Optional
 	Override map[string]string `json:"override,omitempty"`
 }
 
-type BlueprintInfoList struct {
-	Items []Blueprint `json:"items,omitempty"`
+type ProfileInfoList struct {
+	Items []Profile `json:"items,omitempty"`
 }
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	Infrastructure []BlueprintInfo `json:"infrastructure,omitempty"`
-	Software       []BlueprintInfo `json:"software,omitempty"`
+	Infrastructure []ProfileInfo `json:"infrastructure,omitempty"`
+	Software       []ProfileInfo `json:"software,omitempty"`
 	// ClusterRef is a reference to a CAPI-specific cluster that holds the details
 	// for provisioning CAPI Cluster for a cluster in said provider.
 	// +optional
@@ -69,8 +67,8 @@ type ClusterSpec struct {
 
 // ClusterStatus defines the observed state of Cluster
 type ClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Ready Status
+	Ready bool `json:"ready,omitempty"`
 	// Status of cluster
 	Status string `json:"status,omitempty"`
 	// Sync status of cluster
@@ -83,6 +81,12 @@ type ClusterStatus struct {
 	Version string `json:"version,omitempty"`
 	// Revision of cluster package
 	Revision int64 `json:"revision,omitempty"`
+	// Failure Reason
+	// +optional
+	FailureReason string `json:"failureReason,omitempty"`
+	// Failure Message
+	// +optional
+	FailureMessage string `json:"failureMessage,omitempty"`
 }
 
 // +kubebuilder:object:root=true

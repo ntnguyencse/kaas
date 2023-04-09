@@ -137,6 +137,7 @@ spec:
                             description: Content of Blueprint Packages
                             properties:
                               name:
+                                description: Name of Blueprint
                                 type: string
                               override:
                                 additionalProperties:
@@ -144,7 +145,7 @@ spec:
                                 description: Override field of blueprint
                                 type: object
                               spec:
-                                description: Blueprint Spec of Cluster Resource referred
+                                description: Spec
                                 properties:
                                   name:
                                     description: Name of kind Blueprint
@@ -170,6 +171,7 @@ spec:
                             description: Content of Blueprint Packages
                             properties:
                               name:
+                                description: Name of Blueprint
                                 type: string
                               override:
                                 additionalProperties:
@@ -177,7 +179,7 @@ spec:
                                 description: Override field of blueprint
                                 type: object
                               spec:
-                                description: Blueprint Spec of Cluster Resource referred
+                                description: Spec
                                 properties:
                                   name:
                                     description: Name of kind Blueprint
@@ -200,6 +202,24 @@ spec:
             type: object
           status:
             description: LogicalClusterStatus defines the observed state of LogicalCluster
+            properties:
+              clusterMemberState:
+                description: State of Each Cluster Member
+                type: string
+              conditions:
+                description: Logical Cluster Conditions
+                type: string
+              failureMessage:
+                description: Failure Message
+                type: string
+              failureReason:
+                description: Failure Reason
+                type: string
+              ready:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file Ready state of Logical cluster'
+                type: boolean
             type: object
         type: object
     served: true
