@@ -7,7 +7,7 @@ import (
 	"github.com/ntnguyencse/L-KaaS/pkg/git"
 )
 
-func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, listBluePrint []intentv1.Blueprint, gitClient *git.GitClient) (intentv1.ClusterDescription, error) {
+func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, listBluePrint []intentv1.Profile, gitClient *git.GitClient) (intentv1.ClusterDescription, error) {
 	logger1.Info("Starting transform cluster to cluster description")
 	// Transform cluster
 	var clusterDescription intentv1.ClusterDescription
@@ -51,7 +51,7 @@ func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Con
 
 	return clusterDescription, nil
 }
-func findInfoOfBluePrint(info intentv1.BlueprintInfo, listBP []intentv1.Blueprint) (map[string]string, error) {
+func findInfoOfBluePrint(info intentv1.ProfileInfo, listBP []intentv1.Profile) (map[string]string, error) {
 	var infoBP map[string]string
 	// Recursive find info of  nested blueprint
 	// Name string `json:"name,omitempty"`
@@ -77,7 +77,7 @@ func findInfoOfBluePrint(info intentv1.BlueprintInfo, listBP []intentv1.Blueprin
 	}
 	return infoBP, nil
 }
-func findInforOfBlueprintSpec(inforSpec intentv1.BlueprintInfoSpec, listBP []intentv1.Blueprint) (map[string]string, error) {
+func findInforOfBlueprintSpec(inforSpec intentv1.ProfileInfoSpec, listBP []intentv1.Profile) (map[string]string, error) {
 
 	var infoBP map[string]string
 	for _, bp := range listBP {

@@ -19,17 +19,18 @@ package controllers
 import (
 	"context"
 
-	"github.com/go-logr/logr"
-	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/go-logr/logr"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 )
 
-// ClusterCatalogReconciler reconciles a ClusterCatalog object
-type ClusterCatalogReconciler struct {
+// ProfileReconciler reconciles a Profile object
+type ProfileReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	l      logr.Logger
@@ -37,23 +38,23 @@ type ClusterCatalogReconciler struct {
 }
 
 var (
-	loggerCCL = ctrl.Log.WithName("Cluster Catalog Controller")
+	loggerProfile = ctrl.Log.WithName("Profile Controller")
 )
 
-//+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clustercatalogs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clustercatalogs/finalizers,verbs=update
+//+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=profiles,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=profiles/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=profiles/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the ClusterCatalog object against the actual cluster state, and then
+// the Profile object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
-func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ProfileReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
@@ -62,8 +63,8 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ProfileReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&intentv1.ClusterCatalog{}).
+		For(&intentv1.Profile{}).
 		Complete(r)
 }

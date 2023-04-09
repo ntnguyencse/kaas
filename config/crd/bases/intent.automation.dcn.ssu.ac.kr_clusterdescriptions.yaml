@@ -43,6 +43,7 @@ spec:
                       description: Content of Blueprint Packages
                       properties:
                         name:
+                          description: Name of Blueprint
                           type: string
                         override:
                           additionalProperties:
@@ -50,7 +51,7 @@ spec:
                           description: Override field of blueprint
                           type: object
                         spec:
-                          description: Blueprint Spec of Cluster Resource referred
+                          description: Spec
                           properties:
                             name:
                               description: Name of kind Blueprint
@@ -79,6 +80,7 @@ spec:
                       description: Content of Blueprint Packages
                       properties:
                         name:
+                          description: Name of Blueprint
                           type: string
                         override:
                           additionalProperties:
@@ -86,7 +88,7 @@ spec:
                           description: Override field of blueprint
                           type: object
                         spec:
-                          description: Blueprint Spec of Cluster Resource referred
+                          description: Spec
                           properties:
                             name:
                               description: Name of kind Blueprint

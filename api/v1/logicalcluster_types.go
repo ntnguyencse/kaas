@@ -21,9 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // LogicalClusterSpec defines the desired state of LogicalCluster
 type LogicalClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -48,7 +45,19 @@ type ClusterMember struct {
 type LogicalClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
+	// Ready state of Logical cluster
+	Ready bool `json:"ready,omitempty"`
+	// State of Each Cluster Member
+	ClusterMemberState string `json:"clusterMemberState,omitempty"`
+	// Failure Message
+	// +optional
+	FailureMessage string `json:"failureMessage,omitempty"`
+	// Failure Reason
+	// +optional
+	FailureReason string `json:"failureReason,omitempty"`
+	// Logical Cluster Conditions
+	// +optional
+	Conditions ConditionType `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

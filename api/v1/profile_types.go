@@ -20,34 +20,36 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// BlueprintSpec defines the desired state of Blueprint
-type BlueprintSpec struct {
-	// Blueprint refer to another blueprint
+// ProfileSpec defines the desired state of Profile
+type ProfileSpec struct {
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+
+	// Profile refer to another profile
 	Blueprints []ProfileInfoSpec `json:"blueprint,omitempty"`
 	Values     map[string]string `json:"values,omitempty"`
 }
 
-// +kubebuilder:subresource:status
-// BlueprintStatus defines the observed state of Blueprint
-type BlueprintStatus struct {
+// ProfileStatus defines the observed state of Profile
+type ProfileStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	// Status of Blueprint
+	// Status of Profile
 	Status string `json:"status,omitempty"`
-	// Sync status of Blueprint
+	// Sync status of Profile
 	Sync string `json:"sync,omitempty"`
-	// SHA of blueprint
+	// SHA of Profile
 	SHA string `json:"sha,omitempty"`
-	// Repo contains blueprint
+	// Repo contains Profile
 	Repo string `json:"repo,omitempty"`
-	// Version of blueprint
+	// Version of Profile
 	Version string `json:"version,omitempty"`
-	// Revision of blueprint
+	// Revision of Profile
 	Revision int64 `json:"revision,omitempty"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 // +kubebuilder:pruning:PreserveUnknownFields
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Cluster"
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status",description="Cluster status"
@@ -55,24 +57,25 @@ type BlueprintStatus struct {
 // +kubebuilder:printcolumn:name="Repo",type="string",JSONPath=".status.repo",description="Repo"
 // +kubebuilder:printcolumn:name="Sync",type="string",JSONPath=".status.sync",description="Sync"
 // +kubebuilder:printcolumn:name="Revision",type="integer",JSONPath=".status.revision",description="Revision"
-// Blueprint is the Schema for the blueprints API
-type Blueprint struct {
+
+// Profile is the Schema for the profiles API
+type Profile struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BlueprintSpec   `json:"spec,omitempty"`
-	Status BlueprintStatus `json:"status,omitempty"`
+	Spec   ProfileSpec   `json:"spec,omitempty"`
+	Status ProfileStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// BlueprintList contains a list of Blueprint
-type BlueprintList struct {
+// ProfileList contains a list of Profile
+type ProfileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Blueprint `json:"items"`
+	Items           []Profile `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Blueprint{}, &BlueprintList{})
+	SchemeBuilder.Register(&Profile{}, &ProfileList{})
 }

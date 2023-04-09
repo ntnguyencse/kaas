@@ -1,0 +1,117 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: profiles.intent.automation.dcn.ssu.ac.kr
+spec:
+  group: intent.automation.dcn.ssu.ac.kr
+  names:
+    kind: Profile
+    listKind: ProfileList
+    plural: profiles
+    singular: profile
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Time duration since creation of Cluster
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: Cluster status
+      jsonPath: .status.status
+      name: Status
+      type: string
+    - description: SHA
+      jsonPath: .status.sha
+      name: SHA
+      type: string
+    - description: Repo
+      jsonPath: .status.repo
+      name: Repo
+      type: string
+    - description: Sync
+      jsonPath: .status.sync
+      name: Sync
+      type: string
+    - description: Revision
+      jsonPath: .status.revision
+      name: Revision
+      type: integer
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Profile is the Schema for the profiles API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ProfileSpec defines the desired state of Profile
+            properties:
+              blueprint:
+                description: Profile refer to another profile
+                items:
+                  description: Blueprint Spec of Cluster Resource referred
+                  properties:
+                    name:
+                      description: Name of kind Blueprint
+                      type: string
+                    revision:
+                      description: Revision of Blueprint
+                      type: string
+                    type:
+                      description: Type Blueprint
+                      type: string
+                    version:
+                      description: Published Version of Blueprint
+                      type: string
+                  type: object
+                type: array
+              values:
+                additionalProperties:
+                  type: string
+                type: object
+            type: object
+          status:
+            description: ProfileStatus defines the observed state of Profile
+            properties:
+              repo:
+                description: Repo contains Profile
+                type: string
+              revision:
+                description: Revision of Profile
+                format: int64
+                type: integer
+              sha:
+                description: SHA of Profile
+                type: string
+              status:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file Status of Profile'
+                type: string
+              sync:
+                description: Sync status of Profile
+                type: string
+              version:
+                description: Version of Profile
+                type: string
+            type: object
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+    served: true
+    storage: true
+    subresources:
+      status: {}

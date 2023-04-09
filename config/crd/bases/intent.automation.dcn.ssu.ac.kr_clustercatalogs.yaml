@@ -40,6 +40,7 @@ spec:
                   description: Content of Blueprint Packages
                   properties:
                     name:
+                      description: Name of Blueprint
                       type: string
                     override:
                       additionalProperties:
@@ -47,7 +48,7 @@ spec:
                       description: Override field of blueprint
                       type: object
                     spec:
-                      description: Blueprint Spec of Cluster Resource referred
+                      description: Spec
                       properties:
                         name:
                           description: Name of kind Blueprint
@@ -69,6 +70,7 @@ spec:
                   description: Content of Blueprint Packages
                   properties:
                     name:
+                      description: Name of Blueprint
                       type: string
                     override:
                       additionalProperties:
@@ -76,7 +78,7 @@ spec:
                       description: Override field of blueprint
                       type: object
                     spec:
-                      description: Blueprint Spec of Cluster Resource referred
+                      description: Spec
                       properties:
                         name:
                           description: Name of kind Blueprint
@@ -108,15 +110,12 @@ spec:
                 description: SHA of cluster package
                 type: string
               sync:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file Sync status of cluster'
+                description: Sync status of cluster
                 type: string
               version:
                 description: Version  of cluster package
                 type: string
             type: object
-            x-kubernetes-preserve-unknown-fields: true
         type: object
     served: true
     storage: true
