@@ -30,8 +30,6 @@ type BlueprintSpec struct {
 // +kubebuilder:subresource:status
 // BlueprintStatus defines the observed state of Blueprint
 type BlueprintStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	// Status of Blueprint
 	Status string `json:"status,omitempty"`
 	// Sync status of Blueprint

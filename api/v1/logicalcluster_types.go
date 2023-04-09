@@ -43,8 +43,7 @@ type ClusterMember struct {
 
 // LogicalClusterStatus defines the observed state of LogicalCluster
 type LogicalClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+
 	// Ready state of Logical cluster
 	Ready bool `json:"ready,omitempty"`
 	// State of Each Cluster Member

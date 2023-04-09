@@ -21,9 +21,6 @@ import (
 )
 
 type DescriptionSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	BlueprintInfo ProfileInfo `json:"info,omitempty"`
 
 	Spec map[string]string `json:"spec,omitempty"`
@@ -31,9 +28,6 @@ type DescriptionSpec struct {
 
 // ClusterDescriptionSpec defines the desired state of ClusterDescription
 type ClusterDescriptionSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	Infrastructure []DescriptionSpec `json:"infrastructure,omitempty"`
 
 	Software []DescriptionSpec `json:"software,omitempty"`
@@ -41,8 +35,6 @@ type ClusterDescriptionSpec struct {
 
 // ClusterDescriptionStatus defines the observed state of ClusterDescription
 type ClusterDescriptionStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	Status string `json:"status,omitempty"`
 	// Revision of cluster description
 	Revision int64 `json:"revision,omitempty"`
