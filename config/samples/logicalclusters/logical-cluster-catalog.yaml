@@ -1,12 +1,12 @@
-apiVersion: automation.dcn.ssu.ac.kr/v1alpha1
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: LogicalCluster
 metadata:
   name: mec-cluster
-  namespace: starlab
-  tenant: starlab
+  # namespace: starlab
   labels:
     automation.dcn.ssu.ac.kr/project: dcn
     automation.dcn.ssu.ac.kr/zone: private
+    tenant: starlab
 spec:
   clusters:
     - cluster:

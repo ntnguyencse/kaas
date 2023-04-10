@@ -4,23 +4,18 @@ metadata:
   name: openstack-medium-catalog
 spec:
   infrastructure:
-    spec:
-      provider: 
-      name: openstack-v1
-        blueprint: 
-          name: openstack-small-cluster-v1
-          type: ClusterTemplate
-          revision: 1.0.0
-        override:
-          kubernetesVersion: v1.25.0
-      cni:
-        name: calico-v1
-        blueprint: 
-          name: calico-v1-default
-          type: CNITemplate
-          revision: 1.0.0
+    - name: openstack-v1
+      spec: 
+        name: openstack-small-cluster-v1
+        type: ClusterTemplate
+      override:
+        kubernetesVersion: v1.25.0
+    - name: calico-v1
+      spec: 
+        name: calico-v1-default
+        type: CNITemplate
   software:
     - name: prometheus-v2.2
-      blueprint: prometheus-default
-      type: ApplicationTemplate
-      revison: 1.0.0
+      spec: 
+        name: prometheus-default
+        type: ApplicationTemplate
