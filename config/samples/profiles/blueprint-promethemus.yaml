@@ -2,10 +2,11 @@ apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
 metadata:
   name: prometheus-default
-  kind: Software
-  type: prometheus
   namespace: default
-  revision: 1.0.0
+  labels:
+    kind: Software
+    type: prometheus
+    revision: 1.0.0
 spec:
   values:
     version: 2.41.0

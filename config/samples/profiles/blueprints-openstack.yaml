@@ -1,12 +1,14 @@
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
 metadata:
-  provider: openstack
   name: openstack-small-cluster
-  kind: Infrastructure
-  type: ClusterTemplate
   namespace: default
-  revision: 1.0.0
+  labels:
+    provider: openstack
+    name: openstack-small-cluster
+    kind: Infrastructure
+    type: ClusterTemplate
+    revision: 1.0.0
 spec:
   blueprint: 
     - name: clusterapi-resource-template-default

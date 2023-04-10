@@ -2,10 +2,12 @@ apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
 metadata:
   name: clusterapi-resource-template-default
-  kind: Infrastructure
-  type: ClusterAPITemplate
   namespace: default
-  revision: 1.0.0
+  labels:
+      kind: Infrastructure
+      type: ClusterAPITemplate
+      namespace: default
+      revision: 1.0.0
 spec:
   values:
     filename: cluster-template.yaml
