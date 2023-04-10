@@ -122,9 +122,6 @@ spec:
                 format: int64
                 type: integer
               status:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
                 type: string
               workerstatus:
                 description: Number of worker node

@@ -98,9 +98,7 @@ spec:
                 description: SHA of blueprint
                 type: string
               status:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file Status of Blueprint'
+                description: Status of Blueprint
                 type: string
               sync:
                 description: Sync status of Blueprint

@@ -149,6 +149,7 @@ func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lclus
 		if err != nil {
 			logger.Error(err, "Error when update OwnerRef of Cluster")
 		}
+
 	}
 	// Step 3: If cluster is not existed, create a new one
 	// Create new cluster
@@ -165,7 +166,7 @@ func (r *LogicalClusterReconciler) CreateClusterFromClusterCatalog(ctx context.C
 	newCluster := intentv1.Cluster{}
 	// Get Catalog
 	clusterCatalog := intentv1.ClusterCatalog{}
-	key := types.NamespacedName{Namespace: lcluster.Namespace, Name: clusterSpec.ClusterCatalog}
+	key := types.NamespacedName{Namespace: lcluster.Namespace, Name: clusterSpec.ClusterMemberSpec.ClusterCatalog}
 	err := r.Client.Get(ctx, key, &clusterCatalog)
 	if err != nil {
 		logger.V(1).Error(err, "Error when get Cluster Catalog")
@@ -190,7 +191,7 @@ func (r *LogicalClusterReconciler) CreateClusterFromClusterProfile(ctx context.C
 	newCluster := intentv1.Cluster{}
 	// Get Catalog
 	clusterCatalog := intentv1.ClusterCatalog{}
-	key := types.NamespacedName{Namespace: lcluster.Namespace, Name: clusterSpec.ClusterCatalog}
+	key := types.NamespacedName{Namespace: lcluster.Namespace, Name: clusterSpec.ClusterMemberSpec.ClusterCatalog}
 	err := r.Client.Get(ctx, key, &clusterCatalog)
 	if err != nil {
 		logger.V(1).Error(err, "Error when get Cluster Catalog")
@@ -241,8 +242,8 @@ func (r *LogicalClusterReconciler) BuildClusterObjectFromCatalog(ctx context.Con
 func (r *LogicalClusterReconciler) BuildClusterObjectFromProfile(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterMember *intentv1.ClusterMember, clusterCatalog *intentv1.ClusterCatalog) (intentv1.Cluster, error) {
 	// Get Profile from Catalog
 	clusterSpec := intentv1.ClusterSpec{
-		Infrastructure: clusterMember.ClusterMemberSpec.Infrastructure,
-		Software:       clusterMember.ClusterMemberSpec.Software,
+		Infrastructure: clusterMember.ClusterMemberSpec.ClusterSpec.Infrastructure,
+		Software:       clusterMember.ClusterMemberSpec.ClusterSpec.Software,
 	}
 	// Construct a Object
 	clusterObject := intentv1.Cluster{

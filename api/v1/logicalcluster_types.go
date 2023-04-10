@@ -29,13 +29,21 @@ type LogicalClusterSpec struct {
 	// Foo is an example field of LogicalCluster. Edit logicalcluster_types.go to remove/update
 	Clusters []ClusterMember `json:"clusters,omitempty"`
 }
+type ClusterMemberSpec struct {
+	// Cluster Catalog
+	//+optional
+	ClusterCatalog string `json:"clustercatalog,omitempty"`
+	// Cluster Detail Spec
+	//+optional
+	ClusterSpec ClusterSpec `json:"spec,omitempty"`
+}
 type ClusterMember struct {
-	Name           string   `json:"name,omitempty"`
-	ClusterCatalog string   `json:"clustercatalog,omitempty"`
-	Override       []string `json:"override,omitempty"`
+	Name string `json:"name,omitempty"`
+	// ClusterCatalog    string `json:"clustercatalog,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// Cluster member of logical cluster. Each cluster member associate with a physical cluster (CAPI)
 	//+optional
-	ClusterMemberSpec ClusterSpec `json:"spec,omitempty"`
+	ClusterMemberSpec ClusterMemberSpec `json:"spec,omitempty"`
 	// ClusterRef is a reference to a L-KaaS cluster that holds the details cluster
 	// +optional
 	ClusterRef *corev1.ObjectReference `json:"clusterref,omitempty"`

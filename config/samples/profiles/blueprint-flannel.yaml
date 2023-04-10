@@ -1,0 +1,14 @@
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  name: flannel-default
+  kind: Infrastructure
+  type: CNITemplate
+  namespace: default
+  revision: 1.0.0
+spec:
+  values:
+    cni: flannel
+    version: "0.20.0"
+    podCIDR: "[10.96.0.0/12]"
+    serviceCIDR: "[192.168.0.0/16]"
