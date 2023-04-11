@@ -223,6 +223,13 @@ func (in *ClusterCatalogSpec) DeepCopyInto(out *ClusterCatalogSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Network != nil {
+		in, out := &in.Network, &out.Network
+		*out = make([]ProfileInfo, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.Software != nil {
 		in, out := &in.Software, &out.Software
 		*out = make([]ProfileInfo, len(*in))
@@ -321,6 +328,13 @@ func (in *ClusterDescriptionSpec) DeepCopyInto(out *ClusterDescriptionSpec) {
 	*out = *in
 	if in.Infrastructure != nil {
 		in, out := &in.Infrastructure, &out.Infrastructure
+		*out = make([]DescriptionSpec, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Network != nil {
+		in, out := &in.Network, &out.Network
 		*out = make([]DescriptionSpec, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
@@ -435,6 +449,13 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 	*out = *in
 	if in.Infrastructure != nil {
 		in, out := &in.Infrastructure, &out.Infrastructure
+		*out = make([]ProfileInfo, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Network != nil {
+		in, out := &in.Network, &out.Network
 		*out = make([]ProfileInfo, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])

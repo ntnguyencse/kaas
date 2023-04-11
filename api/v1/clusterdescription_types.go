@@ -29,8 +29,8 @@ type DescriptionSpec struct {
 // ClusterDescriptionSpec defines the desired state of ClusterDescription
 type ClusterDescriptionSpec struct {
 	Infrastructure []DescriptionSpec `json:"infrastructure,omitempty"`
-
-	Software []DescriptionSpec `json:"software,omitempty"`
+	Network        []DescriptionSpec `json:"network,omitempty"`
+	Software       []DescriptionSpec `json:"software,omitempty"`
 }
 
 // ClusterDescriptionStatus defines the observed state of ClusterDescription

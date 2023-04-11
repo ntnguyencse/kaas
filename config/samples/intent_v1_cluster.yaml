@@ -21,6 +21,7 @@ spec:
           revision: 1.0.0
         override:
           kubernetesVersion: v1.25.0
+  network:
       - cni:
         name: flannel
         spec: 

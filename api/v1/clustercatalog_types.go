@@ -23,6 +23,7 @@ import (
 // ClusterCatalogSpec defines the desired state of ClusterCatalog
 type ClusterCatalogSpec struct {
 	Infrastructure []ProfileInfo `json:"infrastructure,omitempty"`
+	Network        []ProfileInfo `json:"network,omitempty"`
 	Software       []ProfileInfo `json:"software,omitempty"`
 }
 

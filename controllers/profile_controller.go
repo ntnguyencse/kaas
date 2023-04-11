@@ -38,7 +38,7 @@ type ProfileReconciler struct {
 }
 
 var (
-	loggerProfile = ctrl.Log.WithName("Profile Controller")
+	loggerP = ctrl.Log.WithName("Profile Controller")
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=profiles,verbs=get;list;watch;create;update;patch;delete

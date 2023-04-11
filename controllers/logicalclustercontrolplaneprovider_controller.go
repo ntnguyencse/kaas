@@ -43,6 +43,10 @@ type LogicalClusterControlPlaneProviderReconciler struct {
 	s      *json.Serializer
 }
 
+var (
+	loggerLKP = ctrl.Log.WithName("L-KaaS Control Plane Provider")
+)
+
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclustercontrolplaneproviders,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclustercontrolplaneproviders/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclustercontrolplaneproviders/finalizers,verbs=update

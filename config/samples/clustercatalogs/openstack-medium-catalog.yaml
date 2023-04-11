@@ -10,6 +10,7 @@ spec:
         type: ClusterTemplate
       override:
         kubernetesVersion: v1.25.0
+  network:
     - name: calico-v1
       spec: 
         name: calico-v1-default

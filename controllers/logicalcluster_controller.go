@@ -40,6 +40,10 @@ type LogicalClusterReconciler struct {
 	s      *json.Serializer
 }
 
+var (
+	loggerLL = ctrl.Log.WithName("Logical Cluster Controller")
+)
+
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters/finalizers,verbs=update
@@ -57,8 +61,8 @@ func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	_ = log.FromContext(ctx)
 
 	// Get/ Fetch Cluster Instance Logical cluster
-	cluster := &intentv1.LogicalCluster{}
-	if err := r.Client.Get(ctx, req.NamespacedName, cluster); err != nil {
+	logicalCluster := &intentv1.LogicalCluster{}
+	if err := r.Client.Get(ctx, req.NamespacedName, logicalCluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
@@ -69,17 +73,28 @@ func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	// Do something
+	// Check each cluster member
+	clusterMemberList := logicalCluster.Spec.Clusters
+	for _, clusterMember := range clusterMemberList {
+		if clusterMember.ClusterRef != nil {
+			if len(clusterMember.ClusterRef.APIVersion) != 0 && len(clusterMember.ClusterRef.Kind) != 0 && len(clusterMember.ClusterRef.Name) != 0 {
+				r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
+			}
+		} else {
+			r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
+		}
+
+	}
 	// defer func() {}
 	defer func() {
 		// Always reconcile the Status.Phase field.
 		// Reconcile phase of logical cluster
-		r.ReconcileClusterPhase(ctx, cluster)
+		r.ReconcileClusterPhase(ctx, logicalCluster)
 	}()
 
 	// Handle deletion reconciliation loop.
-	if !cluster.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.ReconcileDelete(ctx, cluster)
+	if !logicalCluster.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.ReconcileDelete(ctx, logicalCluster)
 	}
 
 	// Handle normal reconciliation loop.
@@ -117,7 +132,7 @@ func (r *LogicalClusterReconciler) ReconcileCreate(ctx context.Context, req ctrl
 	return ctrl.Result{}, nil
 }
 
-func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterName string) (intentv1.Cluster, error) {
+func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterMember *intentv1.ClusterMember) (intentv1.Cluster, error) {
 	cluster := intentv1.Cluster{}
 
 	// Step 1: Get the Clusters in CAPI
@@ -130,35 +145,61 @@ func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lclus
 	existingCAPICluster := intentv1.Cluster{}
 	isAlreadyExist := false
 	for _, clster := range CAPIClusterList.Items {
-		if clster.Name == clusterName {
+		if clster.Name == clusterMember.Name {
 			isAlreadyExist = true
 			existingCAPICluster = clster
 		}
 	}
 	if isAlreadyExist {
-		// Add OwnerRef to existing Cluster
-		// CAPI Cluster is owned by Logical Cluster
-		existingCAPICluster.SetOwnerReferences(capiulti.EnsureOwnerRef(existingCAPICluster.GetOwnerReferences(), metav1.OwnerReference{
-			APIVersion: lcluster.APIVersion,
-			Kind:       lcluster.Kind,
-			Name:       lcluster.Name,
-			UID:        lcluster.UID,
-		}))
-		// Update to API Server
-		err := r.Client.Update(ctx, &existingCAPICluster)
-		if err != nil {
-			logger.Error(err, "Error when update OwnerRef of Cluster")
+		// Check is cluster has owned by another logical clustter
+		ownerRefs := existingCAPICluster.ObjectMeta.OwnerReferences
+		if len(ownerRefs) != 0 {
+			for _, ownerRef := range ownerRefs {
+				if len(ownerRef.Name) == 0 {
+					// Add OwnerRef to existing Cluster
+					// CAPI Cluster is owned by Logical Cluster
+					existingCAPICluster.SetOwnerReferences(capiulti.EnsureOwnerRef(existingCAPICluster.GetOwnerReferences(), metav1.OwnerReference{
+						APIVersion: lcluster.APIVersion,
+						Kind:       lcluster.Kind,
+						Name:       lcluster.Name,
+						UID:        lcluster.UID,
+					}))
+					// Update to API Server
+					loggerLL.Info("Print Cluster: ", "SetOwnerReferences", existingCAPICluster)
+					loggerLL.Info("Update ownerRef Cluster", existingCAPICluster.Name, existingCAPICluster.OwnerReferences)
+					err = r.Client.Update(ctx, &existingCAPICluster)
+					if err != nil {
+						logger.Error(err, "Error when update OwnerRef of Cluster")
+					}
+				}
+				if ownerRef.Name == lcluster.Name && ownerRef.APIVersion == lcluster.APIVersion && lcluster.Kind == ownerRef.Kind {
+					// No need to do any thing
+					// just return
+					cluster = existingCAPICluster
+				}
+			}
 		}
 
+	} else {
+		// Step 3: If cluster is not existed, create a new one
+		// Create new cluster
+		// If Cluster contain both of Catalog and Profile,
+		// We prioritize create Cluster with Profile
+		clr, err := r.CreateClusterFromClusterCatalog(ctx, lcluster, clusterMember)
+		if err != nil {
+			loggerLL.Error(err, "Error CreateClusterFromClusterCatalog")
+		}
+		err = r.Client.Create(ctx, &clr)
+		if err != nil {
+			logger.Error(err, "Error when Create Cluster from  Cluster member")
+		}
+		cluster = clr
+		// Check Cluster Member contains Catalog or not
+		// TODO: Check Catalog and Profile
+		// Apply to management cluster
 	}
-	// Step 3: If cluster is not existed, create a new one
-	// Create new cluster
-	// If Cluster contain both of Catalog and Profile,
-	// We prioritize create Cluster with Profile
 
-	// Check Cluster Member contains Catalog or not
-	// TODO: Check Catalog and Profile
-	return cluster, nil
+	return cluster, err
 }
 
 // Create Cluster from Cluster Catalog
