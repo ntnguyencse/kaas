@@ -76,11 +76,14 @@ func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	// Check each cluster member
 	clusterMemberList := logicalCluster.Spec.Clusters
 	for _, clusterMember := range clusterMemberList {
+		loggerLL.Info("Print ClusterMember:", logicalCluster.Name, clusterMember)
 		if clusterMember.ClusterRef != nil {
 			if len(clusterMember.ClusterRef.APIVersion) != 0 && len(clusterMember.ClusterRef.Kind) != 0 && len(clusterMember.ClusterRef.Name) != 0 {
+				loggerLL.Info("Checking Cluster Ref")
 				r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
 			}
 		} else {
+			loggerLL.Info("Create new Cluster Member")
 			r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
 		}
 
@@ -175,6 +178,7 @@ func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lclus
 				if ownerRef.Name == lcluster.Name && ownerRef.APIVersion == lcluster.APIVersion && lcluster.Kind == ownerRef.Kind {
 					// No need to do any thing
 					// just return
+					loggerLL.Info("Do nothing, cluster already created")
 					cluster = existingCAPICluster
 				}
 			}
@@ -185,6 +189,7 @@ func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lclus
 		// Create new cluster
 		// If Cluster contain both of Catalog and Profile,
 		// We prioritize create Cluster with Profile
+		loggerLL.Info("Create new Cluster")
 		clr, err := r.CreateClusterFromClusterCatalog(ctx, lcluster, clusterMember)
 		if err != nil {
 			loggerLL.Error(err, "Error CreateClusterFromClusterCatalog")
@@ -205,6 +210,7 @@ func (r *LogicalClusterReconciler) GetOrCreateCluster(ctx context.Context, lclus
 // Create Cluster from Cluster Catalog
 func (r *LogicalClusterReconciler) CreateClusterFromClusterCatalog(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterSpec *intentv1.ClusterMember) (intentv1.Cluster, error) {
 	newCluster := intentv1.Cluster{}
+	loggerLL.Info("Creating cluster From Cluster Catalog: ", lcluster.Name, clusterSpec)
 	// Get Catalog
 	clusterCatalog := intentv1.ClusterCatalog{}
 	key := types.NamespacedName{Namespace: lcluster.Namespace, Name: clusterSpec.ClusterMemberSpec.ClusterCatalog}
