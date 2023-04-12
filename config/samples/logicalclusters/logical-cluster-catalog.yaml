@@ -1,0 +1,44 @@
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: LogicalCluster
+metadata:
+  name: mec-cluster
+  # namespace: starlab
+  labels:
+    automation.dcn.ssu.ac.kr/project: dcn
+    automation.dcn.ssu.ac.kr/zone: private
+    tenant: starlab
+spec:
+  clusters:
+    - cluster:
+      name: central-cluster
+      metadata:
+        labels:
+          automation.dcn.ssu.ac.kr/location: kr-seoul
+          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+      spec:
+        clustercatalog: openstack-medium-catalog
+    - cluster:
+      name: seoul-edge-cluster
+      metadata:
+        labels:
+          automation.dcn.ssu.ac.kr/location: kr-seoul
+          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+      spec:
+        clustercatalog: openstack-medium-catalog
+    - cluster:
+      name: busan-edge-cluster
+      metadata:
+        labels:
+          automation.dcn.ssu.ac.kr/location: kr-busan
+          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+      spec:
+        clustercatalog: openstack-medium-catalog
+    - cluster:
+      name: gwangju-edge-cluster
+      metadata:
+        labels:
+          automation.dcn.ssu.ac.kr/location: kr-gwangju
+          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+      spec:
+        clustercatalog: openstack-medium-catalog
+

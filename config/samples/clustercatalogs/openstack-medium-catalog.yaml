@@ -1,0 +1,22 @@
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: ClusterCatalog
+metadata:
+  name: openstack-medium-catalog
+spec:
+  infrastructure:
+    - name: openstack-v1
+      spec: 
+        name: openstack-small-cluster-v1
+        type: ClusterTemplate
+      override:
+        kubernetesVersion: v1.25.0
+  network:
+    - name: calico-v1
+      spec: 
+        name: calico-v1-default
+        type: CNITemplate
+  software:
+    - name: prometheus-v2.2
+      spec: 
+        name: prometheus-default
+        type: ApplicationTemplate

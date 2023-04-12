@@ -73,6 +73,43 @@ spec:
                       type: object
                   type: object
                 type: array
+              network:
+                items:
+                  properties:
+                    info:
+                      description: Content of Blueprint Packages
+                      properties:
+                        name:
+                          description: Name of Blueprint
+                          type: string
+                        override:
+                          additionalProperties:
+                            type: string
+                          description: Override field of blueprint
+                          type: object
+                        spec:
+                          description: Spec
+                          properties:
+                            name:
+                              description: Name of kind Blueprint
+                              type: string
+                            revision:
+                              description: Revision of Blueprint
+                              type: string
+                            type:
+                              description: Type Blueprint
+                              type: string
+                            version:
+                              description: Published Version of Blueprint
+                              type: string
+                          type: object
+                      type: object
+                    spec:
+                      additionalProperties:
+                        type: string
+                      type: object
+                  type: object
+                type: array
               software:
                 items:
                   properties:
@@ -122,9 +159,6 @@ spec:
                 format: int64
                 type: integer
               status:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
                 type: string
               workerstatus:
                 description: Number of worker node

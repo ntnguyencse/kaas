@@ -65,6 +65,36 @@ spec:
                       type: object
                   type: object
                 type: array
+              network:
+                items:
+                  description: Content of Blueprint Packages
+                  properties:
+                    name:
+                      description: Name of Blueprint
+                      type: string
+                    override:
+                      additionalProperties:
+                        type: string
+                      description: Override field of blueprint
+                      type: object
+                    spec:
+                      description: Spec
+                      properties:
+                        name:
+                          description: Name of kind Blueprint
+                          type: string
+                        revision:
+                          description: Revision of Blueprint
+                          type: string
+                        type:
+                          description: Type Blueprint
+                          type: string
+                        version:
+                          description: Published Version of Blueprint
+                          type: string
+                      type: object
+                  type: object
+                type: array
               software:
                 items:
                   description: Content of Blueprint Packages

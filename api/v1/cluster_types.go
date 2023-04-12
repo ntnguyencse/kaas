@@ -55,6 +55,7 @@ type ProfileInfoList struct {
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
 	Infrastructure []ProfileInfo `json:"infrastructure,omitempty"`
+	Network        []ProfileInfo `json:"network,omitempty"`
 	Software       []ProfileInfo `json:"software,omitempty"`
 	// ClusterRef is a reference to a CAPI-specific cluster that holds the details
 	// for provisioning CAPI Cluster for a cluster in said provider.

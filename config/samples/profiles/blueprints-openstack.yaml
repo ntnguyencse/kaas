@@ -1,0 +1,22 @@
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  name: openstack-small-cluster
+  namespace: default
+  labels:
+    provider: openstack
+    name: openstack-small-cluster
+    kind: Infrastructure
+    type: ClusterTemplate
+    revision: 1.0.0
+spec:
+  blueprint: 
+    - name: clusterapi-resource-template-default
+      type: ClusterAPITemplate
+      revision: 1.0.0
+  values:
+    kubernetesVersion: v1.24.8
+    controlPlaneMachineCount: "1"
+    workerMachineCount: "3"
+    controlplaneFlavor: m1.medium
+    workerFlavor: m1.large
