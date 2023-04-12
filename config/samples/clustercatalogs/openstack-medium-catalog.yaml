@@ -6,14 +6,14 @@ spec:
   infrastructure:
     - name: openstack-v1
       spec: 
-        name: openstack-small-cluster-v1
+        name: openstack-small-cluster
         type: ClusterTemplate
       override:
         kubernetesVersion: v1.25.0
   network:
-    - name: calico-v1
+    - name: flannel-default
       spec: 
-        name: calico-v1-default
+        name: flannel-default
         type: CNITemplate
   software:
     - name: prometheus-v2.2

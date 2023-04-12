@@ -3,7 +3,7 @@ kind: Blueprint
 metadata:
   name: prometheus-default
   kind: software
-  type: prometheus
+  type: ApplicationTemplate
   namespace: default
   revision: 1.0.0
 spec:

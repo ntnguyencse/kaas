@@ -4,11 +4,11 @@ import (
 	"context"
 
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
-	"github.com/ntnguyencse/L-KaaS/pkg/git"
+	// "github.com/ntnguyencse/L-KaaS/pkg/git"
 )
 
-func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, listBluePrint []intentv1.Profile, gitClient *git.GitClient) (intentv1.ClusterDescription, error) {
-	logger1.Info("Starting transform cluster to cluster description")
+func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, listBluePrint []intentv1.Profile) (intentv1.ClusterDescription, error) {
+	loggerCL.Info("Starting transform cluster to cluster description")
 	// Transform cluster
 	var clusterDescription intentv1.ClusterDescription
 	// Form a clusterDescription from cluster
@@ -30,7 +30,7 @@ func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Con
 			Spec:          valu,
 		}
 		clusterDescription.Spec.Infrastructure = append(clusterDescription.Spec.Infrastructure, desSpec)
-		logger1.Info("Print value infra blueprint", "value", valu)
+		loggerCL.Info("Print value infra blueprint", "value", valu)
 	}
 	// Get list Blueprint Software
 	blueprintSoftware := clusterCR.Spec.Software
@@ -44,10 +44,25 @@ func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Con
 			BlueprintInfo: bpSoftware,
 			Spec:          valu,
 		}
-		clusterDescription.Spec.Infrastructure = append(clusterDescription.Spec.Infrastructure, desSpec)
-		logger1.Info("Print value software blueprint", "value", valu)
+		clusterDescription.Spec.Software = append(clusterDescription.Spec.Software, desSpec)
+		loggerCL.Info("Print value software blueprint", "value", valu)
 	}
 	// r.Client.Get()
+	// Get list blueprint Network
+	blueprintNetwork := clusterCR.Spec.Network
+
+	for _, bpNetwork := range blueprintNetwork {
+
+		// Get all value of blueprint
+		valu, _ := findInfoOfBluePrint(bpNetwork, listBluePrint)
+
+		desSpec := intentv1.DescriptionSpec{
+			BlueprintInfo: bpNetwork,
+			Spec:          valu,
+		}
+		clusterDescription.Spec.Network = append(clusterDescription.Spec.Network, desSpec)
+		loggerCL.Info("Print value network blueprint", "value", valu)
+	}
 
 	return clusterDescription, nil
 }
@@ -59,7 +74,7 @@ func findInfoOfBluePrint(info intentv1.ProfileInfo, listBP []intentv1.Profile) (
 	// Override map[string]string `json:"override,omitempty"`
 	// Layer 1 blueprint
 	for _, bp := range listBP {
-		logger1.Info(info.Name, "findInfoOfBluePrint", bp.Name)
+		loggerCL.Info(info.Name, "findInfoOfBluePrint", bp.Name)
 
 		if bp.Name == info.Spec.Name {
 
@@ -81,7 +96,7 @@ func findInforOfBlueprintSpec(inforSpec intentv1.ProfileInfoSpec, listBP []inten
 
 	var infoBP map[string]string
 	for _, bp := range listBP {
-		logger1.Info(inforSpec.Name, "findInforOfBlueprintSpec", bp.Name)
+		loggerCL.Info(inforSpec.Name, "findInforOfBlueprintSpec", bp.Name)
 		if bp.Name == inforSpec.Name {
 			infoBP = merge2map(infoBP, bp.Spec.Values)
 			return infoBP, nil

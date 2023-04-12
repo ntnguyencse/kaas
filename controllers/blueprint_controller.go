@@ -63,6 +63,9 @@ var (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	if true {
+		return ctrl.Result{}, nil
+	}
 	// Load Configurations
 	configuration := config.LoadConfig(config.DEFAULT_CONFIG_PATH)
 
@@ -82,12 +85,12 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// The Cluster Resources has been deleted, so we need to delete the cluster resource description corresponding
-			logger1.V(1).Info("The Blueprint has been deleted")
+			loggerCL.V(1).Info("The Blueprint has been deleted")
 			// Error. Not allow to delete blueprint
 			return ctrl.Result{}, nil
 		}
 		// There was an error getting the Deployment, so we'll retry later
-		logger1.V(1).Info("There was an error getting the Blueprint, so we'll retry later")
+		loggerCL.V(1).Info("There was an error getting the Blueprint, so we'll retry later")
 		return ctrl.Result{}, err
 	}
 	if bp.Status.Revision < 1 {

@@ -5,7 +5,7 @@ metadata:
   namespace: default
   labels:
     kind: Software
-    type: prometheus
+    type: ApplicationTemplate
     revision: 1.0.0
 spec:
   values:

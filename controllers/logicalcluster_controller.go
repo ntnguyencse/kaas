@@ -263,6 +263,7 @@ func (r *LogicalClusterReconciler) BuildClusterObjectFromCatalog(ctx context.Con
 	// Get Profile from Catalog
 	clusterSpec := intentv1.ClusterSpec{
 		Infrastructure: clusterCatalog.Spec.Infrastructure,
+		Network:        clusterCatalog.Spec.Network,
 		Software:       clusterCatalog.Spec.Software,
 	}
 	// Construct a Object
