@@ -8,10 +8,12 @@ const DEFAULT_CONFIG_PATH string = "./config.yml"
 const DEFAULT_OPENSTACKCONFIG_PATH string = "./openstack-config.yml"
 
 type Configuration struct {
-	Owner         string `required:"true" env:"OWNER"`
-	BlueprintRepo string `required:"true" env:"BLUEPRINT_REPO"`
-	ClusterRepo   string `required:"true" env:"CLUSTER_REPO"`
-	GitHubToken   string `required:"true" env:"GITHUB_TOKEN"`
+	Owner                          string `required:"true" env:"OWNER"`
+	BlueprintRepo                  string `required:"true" env:"BLUEPRINT_REPO"`
+	ClusterRepo                    string `required:"true" env:"CLUSTER_REPO"`
+	GitHubToken                    string `required:"true" env:"GITHUB_TOKEN"`
+	OpenStackConfigurationFilePath string `required:"false" env:"OS_CONFIGPATH"`
+	// AWSConfigurationFilePath       string `required:"false" env:"AWS_CONFIGPATH"`
 }
 
 func LoadConfig(path string) Configuration {

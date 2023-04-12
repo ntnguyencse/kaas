@@ -2,10 +2,33 @@ package controllers
 
 import (
 	"context"
+	"os"
 
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	// "github.com/ntnguyencse/L-KaaS/pkg/git"
+	config "github.com/ntnguyencse/L-KaaS/pkg/config"
+	CAPIClient "github.com/ntnguyencse/cluster-api-sdk/client"
+	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 )
+
+const OPENSTACK_PROVIDER_URL string = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/v0.7.1/infrastructure-components.yaml"
+const DEFAULT_CAPI_CONFIG_PATH string = "config/capi/clusterctl-config.yaml"
+
+var KUBECONFIG string
+var configs = map[string]string{
+	"OPENSTACK_IMAGE_NAME":                   "OPENSTACK_IMAGE_NAME",
+	"OPENSTACK_EXTERNAL_NETWORK_ID":          "OPENSTACK_EXTERNAL_NETWORK_ID",
+	"OPENSTACK_DNS_NAMESERVERS":              "OPENSTACK_DNS_NAMESERVERS",
+	"OPENSTACK_SSH_KEY_NAME":                 "OPENSTACK_SSH_KEY_NAME",
+	"OPENSTACK_CLOUD_CACERT_B64":             "OPENSTACK_CLOUD_CACERT_B64",
+	"OPENSTACK_CLOUD_PROVIDER_CONF_B64":      "OPENSTACK_CLOUD_PROVIDER_CONF_B64",
+	"OPENSTACK_CLOUD_YAML_B64":               "OPENSTACK_CLOUD_YAML_B64",
+	"OPENSTACK_FAILURE_DOMAIN":               "OPENSTACK_FAILURE_DOMAIN",
+	"OPENSTACK_CLOUD":                        "OPENSTACK_CLOUD",
+	"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR": "OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR",
+	"OPENSTACK_NODE_MACHINE_FLAVOR":          "OPENSTACK_NODE_MACHINE_FLAVOR",
+	"KUBERNETES_VERSION":                     "1.24.5",
+}
 
 func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, listBluePrint []intentv1.Profile) (intentv1.ClusterDescription, error) {
 	loggerCL.Info("Starting transform cluster to cluster description")
@@ -116,4 +139,59 @@ func merge2map(map1, map2 map[string]string) map[string]string {
 		map1[key] = value
 	}
 	return map1
+}
+
+//	var config1 = CAPIConfig{
+//		"OPENSTACK_IMAGE_NAME":                   "OPENSTACK_IMAGE_NAME",
+//		"OPENSTACK_EXTERNAL_NETWORK_ID":          "OPENSTACK_EXTERNAL_NETWORK_ID",
+//		"OPENSTACK_DNS_NAMESERVERS":              "OPENSTACK_DNS_NAMESERVERS",
+//		"OPENSTACK_SSH_KEY_NAME":                 "OPENSTACK_SSH_KEY_NAME",
+//		"OPENSTACK_CLOUD_CACERT_B64":             "OPENSTACK_CLOUD_CACERT_B64",
+//		"OPENSTACK_CLOUD_PROVIDER_CONF_B64":      "OPENSTACK_CLOUD_PROVIDER_CONF_B64",
+//		"OPENSTACK_CLOUD_YAML_B64":               "OPENSTACK_CLOUD_YAML_B64",
+//		"OPENSTACK_FAILURE_DOMAIN":               "OPENSTACK_FAILURE_DOMAIN",
+//		"OPENSTACK_CLOUD":                        "OPENSTACK_CLOUD",
+//		"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR": "OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR",
+//		"OPENSTACK_NODE_MACHINE_FLAVOR":          "OPENSTACK_NODE_MACHINE_FLAVOR",
+//	}
+func TranslateFromClusterDescritionToCAPI(clusterDes *intentv1.ClusterDescription, configForCluster map[string]string) error {
+	// Create Cluster API SDK Client
+	// Get provider config
+	// getConfigForProvider()
+	// Currently, only use InfrastructureProviderType for boostraping cluster
+	providerConfigs := CAPIClient.CreateProviderConfig(CAPIClient.OPENSTACK, OPENSTACK_PROVIDER_URL, CAPIClient.InfrastructureProviderType)
+	// Create client
+	KUBECONFIG = os.Getenv("KUBECONFIG")
+	clientctl, err := CAPIClient.CreateNewClient(KUBECONFIG, configForCluster, providerConfigs)
+	if err != nil {
+		loggerCL.Error(err, "Error when create CAPI client")
+	}
+	// Generate Cluster
+	url := "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/blob/main/templates/cluster-template.yaml"
+	clientctl.GetClusterTemplate(clusterDes.Name, clusterDes.Namespace, url)
+	return nil
+}
+
+func getConfigForProvider(pdType clusterctlv1.ProviderType, providerURL, name, configPath string) (intentv1.ProviderConfig, error) {
+	// Current only support for OPENSTACK, Edit this function to support more provider
+	if configPath != "" {
+		configPath = DEFAULT_CAPI_CONFIG_PATH
+	}
+	providerConfigLoaded := config.LoadOpenStackConfig(configPath)
+	// for k, v := range providerConfigLoaded {
+	// 	providerConfig[k] = v
+	// }
+	providerConfig := intentv1.ProviderConfig{}
+	providerConfig["OPENSTACK_DNS_NAMESERVERS"] = providerConfigLoaded.OPENSTACK_DNS_NAMESERVERS
+	providerConfig["OPENSTACK_IMAGE_NAME"] = providerConfigLoaded.OPENSTACK_IMAGE_NAME
+	providerConfig["OPENSTACK_EXTERNAL_NETWORK_ID"] = providerConfigLoaded.OPENSTACK_EXTERNAL_NETWORK_ID
+	providerConfig["OPENSTACK_SSH_KEY_NAME"] = providerConfigLoaded.OPENSTACK_SSH_KEY_NAME
+	providerConfig["OPENSTACK_CLOUD_CACERT_B64"] = providerConfigLoaded.OPENSTACK_CLOUD_CACERT_B64
+	providerConfig["OPENSTACK_CLOUD_PROVIDER_CONF_B64"] = providerConfigLoaded.OPENSTACK_CLOUD_PROVIDER_CONF_B64
+	providerConfig["OPENSTACK_CLOUD_YAML_B64"] = providerConfigLoaded.OPENSTACK_CLOUD_PROVIDER_CONF_B64
+	providerConfig["OPENSTACK_CLOUD"] = providerConfigLoaded.OPENSTACK_CLOUD_PROVIDER_CONF_B64
+	providerConfig["OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR"] = providerConfigLoaded.OPENSTACK_CLOUD_PROVIDER_CONF_B64
+	providerConfig["OPENSTACK_NODE_MACHINE_FLAVOR"] = providerConfigLoaded.OPENSTACK_CLOUD_PROVIDER_CONF_B64
+
+	return providerConfig, nil
 }
