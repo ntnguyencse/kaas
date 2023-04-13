@@ -342,5 +342,46 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, cluster *int
 	}
 	clusterDescriptiton, err := r.TransformClusterToClusterDescription(ctx, *cluster, listProfiles.Items)
 	loggerCL.Info("Print CLuster Descrition", clusterDescriptiton.Name, clusterDescriptiton)
+	// Get Provider COnfig
+	OpenStackProviderConfig := GetConfigForOpenStack()
+	// Get Credentials of Provider
+	configs, err := getCredentialsForOpenStackProvider("/home/ubuntu/l-kaas/L-KaaS/config/capi/capictl.yml")
+	if err != nil {
+		loggerCL.Error(err, "getCredentialsForOpenStackProvider")
+	}
+	// Add config from CLuster Description to configs variables
+	// TODO: Change this function or redesign Profile Specs to easy to transform
+	// Current only use mapping variables
+	configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
+
+	clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
+	loggerCL.Info("Print CAPI Resource:", clusterDescriptiton.Name, clusterStr)
 	return clusterDescriptiton, err
+}
+func GetOpenStackConfigPath(systemConfigPath string) (string, error) {
+	url := "Underconstruction"
+	return url, nil
+}
+
+// Add config from Infra Part of cluster Description
+// TODO: Make it general for most of provider
+// Current only support for OpenStack
+func AddInfraConfigsFromClusterDescription(clusterDes *intentv1.ClusterDescription, configs map[string]string) map[string]string {
+	// Take the first Infra record
+	// Fix this later
+	infraDes := clusterDes.Spec.Infrastructure[0]
+	// Mapping
+	configs["WORKER_MACHINE_COUNT"] = infraDes.Spec["workerMachineCount"]
+	configs["KUBERNETES_VERSION"] = infraDes.Spec["kubernetesVersion"]
+	configs["CONTROL_PLANE_MACHINE_COUNT"] = infraDes.Spec["controlPlaneMachineCount"]
+	configs["OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR"] = infraDes.Spec["controlplaneFlavor"]
+	configs["OPENSTACK_NODE_MACHINE_FLAVOR"] = infraDes.Spec["workerFlavor"]
+	configs["CAPI_TEMPLATE_URL"] = infraDes.Spec["url"] + infraDes.Spec["filename"]
+	// Take the first Network record
+	networkDes := clusterDes.Spec.Network[0]
+	configs["POD_CIDR"] = networkDes.Spec["podCIDR"]
+	configs["CNI_NAME"] = networkDes.Spec["cni"]
+	configs["SERVICE_CIDR"] = networkDes.Spec["serviceCIDR"]
+	return configs
+
 }
