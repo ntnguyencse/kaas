@@ -17,18 +17,21 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
+	"io"
+
 	// jsonclassic "encoding/json"
 
 	// config "github.com/ntnguyencse/L-KaaS/pkg/config"
+	"github.com/go-logr/logr"
+	goyaml "github.com/go-yaml/yaml"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/go-logr/logr"
-	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	// "github.com/ntnguyencse/L-KaaS/pkg/git"
 )
 
@@ -355,7 +358,7 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, cluster *int
 	configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
 
 	clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
-	loggerCL.Info("Print CAPI Resource:", clusterDescriptiton.Name, clusterStr)
+	r.ApplyCAPIResourceToKubernertes(clusterStr)
 	return clusterDescriptiton, err
 }
 func GetOpenStackConfigPath(systemConfigPath string) (string, error) {
@@ -383,5 +386,42 @@ func AddInfraConfigsFromClusterDescription(clusterDes *intentv1.ClusterDescripti
 	configs["CNI_NAME"] = networkDes.Spec["cni"]
 	configs["SERVICE_CIDR"] = networkDes.Spec["serviceCIDR"]
 	return configs
+
+}
+
+func (r *ClusterReconciler) ApplyCAPIResourceToKubernertes(CAPIRes string) error {
+	listCAPIRes, err := SplitYAML([]byte(CAPIRes))
+	if err != nil {
+		loggerCL.Error(err, "Error convert CAPI Resources")
+		return err
+	}
+	for _, capi := range listCAPIRes {
+		loggerCL.Info("CAPIRes:", "String: ", string(capi))
+	}
+	return nil
+}
+func SplitYAML(resources []byte) ([][]byte, error) {
+
+	dec := goyaml.NewDecoder(bytes.NewReader(resources))
+
+	var res [][]byte
+	for {
+		var value interface{}
+		err := dec.Decode(&value)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		valueBytes, err := goyaml.Marshal(value)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, valueBytes)
+	}
+	return res, nil
+}
+func ChooseKindCAPIResource(resource string) {
 
 }
