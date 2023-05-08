@@ -28,6 +28,7 @@ import (
 	"github.com/go-logr/logr"
 	goyaml "github.com/go-yaml/yaml"
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
 	"github.com/ntnguyencse/L-KaaS/pkg/ultis"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -403,6 +404,7 @@ func (r *ClusterReconciler) ApplyCAPIResourceToKubernertes(clusterName, CAPIRes 
 		return err
 	}
 	defer CleanUpCAPIResource(filepath)
+	kubernetesclient.KubectlApplyYamlFile(filepath)
 	// for i, capi := range listCAPIRes {
 	// 	loggerCL.Info("CAPIRes:", "String: ", string(capi))
 	// 	content := string(capi)

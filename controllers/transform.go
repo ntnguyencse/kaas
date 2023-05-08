@@ -6,8 +6,8 @@ import (
 
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	// "github.com/ntnguyencse/L-KaaS/pkg/git"
+	CAPIClient "github.com/ntnguyencse/L-KaaS/pkg/client"
 	config "github.com/ntnguyencse/L-KaaS/pkg/config"
-	CAPIClient "github.com/ntnguyencse/cluster-api-sdk/client"
 )
 
 const OPENSTACK_PROVIDER_URL string = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/v0.7.1/infrastructure-components.yaml"
