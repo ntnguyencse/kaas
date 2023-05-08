@@ -2,6 +2,8 @@ package ultis
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	// apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,4 +40,24 @@ func GetClusterByNameAndNameSpace(ctx context.Context, c client.Client, clusterN
 		return cluster, err
 	}
 	return cluster, nil
+}
+
+func SaveYamlStringToFile(fileName string, folder string, yamlContent *string) (string, error) {
+	// If folder is empty, save file to current folder
+	if folder == "" {
+		folder, _ = os.Getwd()
+	}
+	filePath := folder + "/" + fileName
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	defer file.Close()
+	if err != nil {
+		fmt.Println(err, "Error when open file")
+		return "error Open", err
+	}
+	_, err = file.WriteString(*yamlContent)
+	if err != nil {
+		fmt.Println(err, "Error when write file")
+		return "error Write", err
+	}
+	return filePath, nil
 }

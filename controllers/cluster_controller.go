@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
 
 	// jsonclassic "encoding/json"
 
@@ -27,12 +28,12 @@ import (
 	"github.com/go-logr/logr"
 	goyaml "github.com/go-yaml/yaml"
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	"github.com/ntnguyencse/L-KaaS/pkg/ultis"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	// "github.com/ntnguyencse/L-KaaS/pkg/git"
 )
 
 // ClusterReconciler reconciles a Cluster object
@@ -358,7 +359,8 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, cluster *int
 	configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
 
 	clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
-	r.ApplyCAPIResourceToKubernertes(clusterStr)
+
+	r.ApplyCAPIResourceToKubernertes(clusterDescriptiton.Name, clusterStr)
 	return clusterDescriptiton, err
 }
 func GetOpenStackConfigPath(systemConfigPath string) (string, error) {
@@ -389,15 +391,37 @@ func AddInfraConfigsFromClusterDescription(clusterDes *intentv1.ClusterDescripti
 
 }
 
-func (r *ClusterReconciler) ApplyCAPIResourceToKubernertes(CAPIRes string) error {
-	listCAPIRes, err := SplitYAML([]byte(CAPIRes))
+func (r *ClusterReconciler) ApplyCAPIResourceToKubernertes(clusterName, CAPIRes string) error {
+	// listCAPIRes, err := SplitYAML([]byte(CAPIRes))
+	// if err != nil {
+	// 	loggerCL.Error(err, "Error convert CAPI Resources")
+	// 	return err
+	// }
+	filepath, err := ultis.SaveYamlStringToFile(clusterName+".yaml", "/home/ubuntu/l-kaas/L-KaaS/test", &CAPIRes)
 	if err != nil {
-		loggerCL.Error(err, "Error convert CAPI Resources")
+		loggerCL.Error(err, "Err Save file")
 		return err
 	}
-	for _, capi := range listCAPIRes {
-		loggerCL.Info("CAPIRes:", "String: ", string(capi))
+	defer CleanUpCAPIResource(filepath)
+	// for i, capi := range listCAPIRes {
+	// 	loggerCL.Info("CAPIRes:", "String: ", string(capi))
+	// 	content := string(capi)
+	// 	filepath, err := ultis.SaveYamlStringToFile(clusterName+strconv.Itoa(i)+".yaml", "/home/ubuntu/l-kaas/L-KaaS/test", &content)
+	// 	if err != nil {
+	// 		loggerCL.Error(err, "Error saving file")
+
+	// 	}
+	// 	loggerCL.Info("Saving file...", filepath, "Finished")
+	// }
+	return nil
+}
+func CleanUpCAPIResource(filePath string) error {
+	err := os.Remove(filePath)
+	if err != nil {
+		loggerCL.Error(err, "Error clean up file: "+filePath)
+		return err
 	}
+	loggerCL.Info("Cleanup file: " + filePath)
 	return nil
 }
 func SplitYAML(resources []byte) ([][]byte, error) {
