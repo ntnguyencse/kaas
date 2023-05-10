@@ -320,7 +320,7 @@ func (r *ClusterReconciler) ReconcileNormal(ctx context.Context, cluster *intent
 	// TODO:
 	// Reconcile Normal
 	loggerCL.Info("Print Cluster: ", cluster.Name, cluster)
-	r.GetOrCreateCluster(ctx, cluster)
+	r.GetOrCreateCluster(ctx, "default", cluster)
 	// Do not forget defer func (){}()
 	return ctrl.Result{}, nil
 }
@@ -338,14 +338,14 @@ func (r *ClusterReconciler) ReconcileClusterPhase(ctx context.Context, cluster *
 
 }
 
-func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, cluster *intentv1.Cluster) (intentv1.ClusterDescription, error) {
+func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, clusterNameSpace string, cluster *intentv1.Cluster) (intentv1.ClusterDescription, error) {
 	// Get list Profiles
 	listProfiles := intentv1.ProfileList{}
 	err := r.Client.List(ctx, &listProfiles)
 	if err != nil {
 		loggerCL.Error(err, "GetOrCreateCluster", "Error when listt profiles")
 	}
-	clusterDescriptiton, err := r.TransformClusterToClusterDescription(ctx, *cluster, listProfiles.Items)
+	clusterDescriptiton, err := r.TransformClusterToClusterDescription(ctx, *cluster, clusterNameSpace, listProfiles.Items)
 	loggerCL.Info("Print CLuster Descrition", clusterDescriptiton.Name, clusterDescriptiton)
 	// Get Provider COnfig
 	OpenStackProviderConfig := GetConfigForOpenStack()

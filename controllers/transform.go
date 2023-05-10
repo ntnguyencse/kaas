@@ -31,7 +31,7 @@ var configs = map[string]string{
 	"WORKER_MACHINE_COUNT":                   "3",
 }
 
-func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, listBluePrint []intentv1.Profile) (intentv1.ClusterDescription, error) {
+func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, clusterNameSpace string, listBluePrint []intentv1.Profile) (intentv1.ClusterDescription, error) {
 	loggerCL.Info("Starting transform cluster to cluster description")
 	// Transform cluster
 	var clusterDescription intentv1.ClusterDescription
@@ -39,7 +39,12 @@ func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Con
 	clusterDescription.Name = clusterCR.Name
 	clusterDescription.Labels = clusterCR.Labels
 	clusterDescription.Annotations = clusterCR.Annotations
-	clusterDescription.Namespace = "clusters"
+	if len(clusterNameSpace) < 1 {
+		clusterDescription.Namespace = "default"
+	} else {
+		clusterDescription.Namespace = clusterNameSpace
+	}
+
 	//
 	// Get list blueprint Infra
 	blueprintInfraInfos := clusterCR.Spec.Infrastructure
