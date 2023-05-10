@@ -155,6 +155,7 @@ func TranslateFromClusterDescritionToCAPI(clusterDes *intentv1.ClusterDescriptio
 	// Currently, only use InfrastructureProviderType for boostraping cluster
 	providerConfigs := CAPIClient.CreateProviderConfig(configForProvider.Name, configForProvider.URL, configForProvider.ProviderType)
 	// Create client
+	// Require setup KUBECONFIG env
 	KUBECONFIG = os.Getenv("KUBECONFIG")
 	clientctl, err := CAPIClient.CreateNewClient(KUBECONFIG, configForCluster, providerConfigs)
 	if err != nil {
@@ -209,4 +210,14 @@ func GetConfigForOpenStack() intentv1.ProviderConfig {
 		URL:          CAPIClient.OPENSTACK_URL,
 		ProviderType: CAPIClient.InfrastructureProviderType,
 	}
+}
+
+func AddToConfigs(config map[string]string, newConfigs map[string]string) map[string]string {
+	// config["CLUSTER_OWNER_KIND"] = ownerRefs["CLUSTER_OWNER_KIND"]
+	// config["CLUSTER_OWNER_NAME"] = ownerRefs["CLUSTER_OWNER_NAME"]
+	// config["CLUSTER_OWNER_UID"] = ownerRefs["CLUSTER_OWNER_UID"]
+	for key, value := range newConfigs {
+		config[key] = value
+	}
+	return config
 }

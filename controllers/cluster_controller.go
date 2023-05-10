@@ -359,6 +359,14 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, clusterNameS
 	// Current only use mapping variables
 	configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
 
+	ownerRefs := map[string]string{
+		"CLUSTER_OWNER_API_VERSION": cluster.DeepCopy().APIVersion,
+		"CLUSTER_OWNER_KIND":        cluster.DeepCopy().Kind,
+		"CLUSTER_OWNER_NAME":        cluster.DeepCopy().Name,
+		"CLUSTER_OWNER_UID":         string(cluster.ObjectMeta.DeepCopy().UID),
+	}
+	configs = AddToConfigs(configs, ownerRefs)
+
 	clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
 
 	r.ApplyCAPIResourceToKubernertes(clusterDescriptiton.Name, clusterStr)
