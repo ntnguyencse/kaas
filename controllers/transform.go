@@ -10,10 +10,14 @@ import (
 	config "github.com/ntnguyencse/L-KaaS/pkg/config"
 )
 
+// CAPI Openstack provider url components
 const OPENSTACK_PROVIDER_URL string = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/v0.7.1/infrastructure-components.yaml"
 const DEFAULT_CAPI_CONFIG_PATH string = "config/capi/clusterctl-config.yaml"
 
+// Require export KUBECONFIG before running
 var KUBECONFIG string
+
+// Openstack configuration format
 var configs = map[string]string{
 	"OPENSTACK_IMAGE_NAME":                   "OPENSTACK_IMAGE_NAME",
 	"OPENSTACK_EXTERNAL_NETWORK_ID":          "OPENSTACK_EXTERNAL_NETWORK_ID",
@@ -31,6 +35,9 @@ var configs = map[string]string{
 	"WORKER_MACHINE_COUNT":                   "3",
 }
 
+// Read the Cluster Description
+// Find the profile corresponding and replace value
+// Add value to Cluster descripton
 func (r *ClusterReconciler) TransformClusterToClusterDescription(ctx context.Context, clusterCR intentv1.Cluster, clusterNameSpace string, listBluePrint []intentv1.Profile) (intentv1.ClusterDescription, error) {
 	loggerCL.Info("Starting transform cluster to cluster description")
 	// Transform cluster

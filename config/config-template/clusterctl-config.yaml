@@ -1,0 +1,25 @@
+OPENSTACK_CLOUD: openstack
+OPENSTACK_CLOUD_CACERT_B64: <cacert-b64>
+OPENSTACK_CLOUD_PROVIDER_CONF_B64: <conf-b64>
+OPENSTACK_CLOUD_YAML_B64: <yaml-b64>
+# The list of nameservers for OpenStack Subnet being created.
+# Set this value when you need create a new network/subnet while the access through DNS is required.
+OPENSTACK_DNS_NAMESERVERS: 8.8.8.8
+# FailureDomain is the failure domain the machine will be created in.
+OPENSTACK_FAILURE_DOMAIN: compute
+# OPENSTACK_FAILURE_DOMAIN: compute2/compute3
+# The flavor reference for the flavor for your server instance.
+OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR: m1.medium
+# The flavor reference for the flavor for your server instance.
+OPENSTACK_NODE_MACHINE_FLAVOR: cluster.compute.small
+# The name of the image to use for your server instance. If the RootVolume is specified, this will be ignored and use rootVolume directly.
+OPENSTACK_IMAGE_NAME: ubuntu-k8s-1.24
+# The SSH key pair name
+OPENSTACK_SSH_KEY_NAME: <ssh-name>
+# The external network
+OPENSTACK_EXTERNAL_NETWORK_ID: <network-id>
+# Enabling Feature Gates
+CLUSTER_TOPOLOGY: true
+# Kubernetes Version
+KUBERNETES_VERSION: 1.24.8
+# CLUSTER_TOPOLOGY=true
