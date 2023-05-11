@@ -1,12 +1,23 @@
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: ClusterCatalog
 metadata:
-  labels:
-    app.kubernetes.io/name: clustercatalog
-    app.kubernetes.io/instance: clustercatalog-sample
-    app.kubernetes.io/part-of: kubernetes-as-a-service
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: kubernetes-as-a-service
-  name: clustercatalog-sample
+  name: openstack-medium-catalog
+  namespace: default
 spec:
-  # TODO(user): Add fields here
+  infrastructure:
+  - name: openstack-v1
+    override:
+      kubernetesVersion: v1.25.0
+    spec:
+      name: openstack-small-cluster
+      type: ClusterTemplate
+  network:
+  - name: flannel-default
+    spec:
+      name: flannel-default
+      type: CNITemplate
+  software:
+  - name: prometheus-v2.2
+    spec:
+      name: prometheus-default
+      type: ApplicationTemplate
