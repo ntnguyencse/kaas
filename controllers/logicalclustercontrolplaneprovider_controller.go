@@ -18,8 +18,10 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	capiv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
@@ -43,6 +45,8 @@ type LogicalClusterControlPlaneProviderReconciler struct {
 	s      *json.Serializer
 }
 
+const timeoutRetryCreateLogicalCluster = 10 * time.Minute
+
 var (
 	loggerLKP = ctrl.Log.WithName("L-KaaS Control Plane Provider")
 )
@@ -64,6 +68,27 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
+	// Get/ Fetch Cluster Instance Logical cluster
+	CAPOClusters := &capiv1alpha4.Cluster{}
+	if err := r.Client.Get(ctx, req.NamespacedName, CAPOClusters); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			return ctrl.Result{}, nil
+		}
+
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+	// Print a CAPO CLuster
+	// loggerLKP.Info("Print CAPO Cluster", "CAPO:", CAPOClusters)
+	// Get status of CAPO Cluster
+	CAPOStatus := CAPOClusters.DeepCopy().Status
+	// Print CAPO Status
+	loggerLKP.Info("Print CAPO STATUS", "CAPO:", CAPOStatus)
+
+	// Separate status object:
+	// CAPOPhaseStatus := CAPOStatus.Phase
 
 	return ctrl.Result{}, nil
 }

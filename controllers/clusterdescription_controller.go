@@ -63,7 +63,7 @@ func (r *ClusterDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.R
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// The Cluster Resources has been deleted, so we need to delete the cluster resource description corresponding
-			logger1.V(1).Info("The Cluster Description has been deleted, so we need to delete the physical cluster corresponding")
+			loggerCL.V(1).Info("The Cluster Description has been deleted, so we need to delete the physical cluster corresponding")
 			/////
 			// TO-DO: Delete the physical cluster
 			////
@@ -71,7 +71,7 @@ func (r *ClusterDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.R
 			return ctrl.Result{}, nil
 		}
 		// There was an error getting the Deployment, so we'll retry later
-		logger1.V(1).Info("There was an error getting the Cluster Description, so we'll retry later")
+		loggerCL.V(1).Info("There was an error getting the Cluster Description, so we'll retry later")
 		return ctrl.Result{}, err
 	}
 	// Applying the changes of cluster description to openstack server

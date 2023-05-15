@@ -1,0 +1,12 @@
+openstackimagename: "ubuntu-k8s-1.24"
+openstackexternalnetworkid: "<network-id>"
+openstackdnsnameservers: "8.8.8.8"
+openstacksshkeyname: <name>
+openstackcloudcacertb64: "<cacert64>"
+openstackcloudproviderconfb64: "<value>"
+openstackcloudyamlb64: "<value>"
+openstackfailuredomain: "compute"
+openstackcloud:  "openstack"
+openstackcontrolplanemachineflavor: "m1.medium"
+openstacknodemachineflavor : "cluster.compute.small"
+kubernetesversion: "1.24.8"

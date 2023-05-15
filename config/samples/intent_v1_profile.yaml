@@ -2,11 +2,67 @@ apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
 metadata:
   labels:
-    app.kubernetes.io/name: profile
-    app.kubernetes.io/instance: profile-sample
-    app.kubernetes.io/part-of: kubernetes-as-a-service
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: kubernetes-as-a-service
-  name: profile-sample
+    kind: Infrastructure
+    namespace: default
+    revision: 1.0.0
+    type: ClusterAPITemplate
+  name: clusterapi-resource-template-default
+  namespace: default
 spec:
-  # TODO(user): Add fields here
+  values:
+    filename: cluster-template.yaml
+    url: https://github.com/ntnguyencse/L-KaaS/blob/dev/templates/capi/
+    version: v0.7.0
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    revision: 1.0.0
+    type: CNITemplate
+  name: flannel-default
+  namespace: default
+spec:
+  values:
+    cni: flannel
+    podCIDR: '[10.96.0.0/12]'
+    serviceCIDR: '[192.168.0.0/16]'
+    version: 0.20.0
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    name: openstack-small-cluster
+    provider: openstack
+    revision: 1.0.0
+    type: ClusterTemplate
+  name: openstack-small-cluster
+  namespace: default
+spec:
+  blueprint:
+  - name: clusterapi-resource-template-default
+    revision: 1.0.0
+    type: ClusterAPITemplate
+  values:
+    controlPlaneMachineCount: "1"
+    controlplaneFlavor: m1.medium
+    kubernetesVersion: v1.24.8
+    workerFlavor: m1.large
+    workerMachineCount: "3"
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Software
+    revision: 1.0.0
+    type: ApplicationTemplate
+  name: prometheus-default
+  namespace: default
+spec:
+  values:
+    configmap: prometheus-config
+    version: 2.41.0

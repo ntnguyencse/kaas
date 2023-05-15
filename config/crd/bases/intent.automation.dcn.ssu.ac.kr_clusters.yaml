@@ -26,19 +26,19 @@ spec:
       type: string
     - description: SHA
       jsonPath: .status.sha
-      name: SHA
+      name: Ready
       type: string
     - description: Repo
       jsonPath: .status.repo
-      name: Repo
+      name: FailureReason
       type: string
     - description: Sync
       jsonPath: .status.sync
-      name: Sync
+      name: FailureMessage
       type: string
     - description: Revision
       jsonPath: .status.revision
-      name: Revision
+      name: Sync
       type: integer
     name: v1
     schema:

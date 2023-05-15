@@ -8,10 +8,12 @@ const DEFAULT_CONFIG_PATH string = "./config.yml"
 const DEFAULT_OPENSTACKCONFIG_PATH string = "./openstack-config.yml"
 
 type Configuration struct {
-	Owner         string `required:"true" env:"OWNER"`
-	BlueprintRepo string `required:"true" env:"BLUEPRINT_REPO"`
-	ClusterRepo   string `required:"true" env:"CLUSTER_REPO"`
-	GitHubToken   string `required:"true" env:"GITHUB_TOKEN"`
+	Owner                          string `required:"true" env:"OWNER"`
+	BlueprintRepo                  string `required:"true" env:"BLUEPRINT_REPO"`
+	ClusterRepo                    string `required:"true" env:"CLUSTER_REPO"`
+	GitHubToken                    string `required:"true" env:"GITHUB_TOKEN"`
+	OpenStackConfigurationFilePath string `required:"false" env:"OS_CONFIGPATH"`
+	// AWSConfigurationFilePath       string `required:"false" env:"AWS_CONFIGPATH"`
 }
 
 func LoadConfig(path string) Configuration {
@@ -24,21 +26,25 @@ func LoadConfig(path string) Configuration {
 	return config
 }
 
+// Variables of config
+// In config file, all variables must not be in UPPER CASE, All names must in LOWER CASE
+// Ex: OpenstackImageName => openstackimagename
 type OpenStackConfiguration struct {
-	OPENSTACK_IMAGE_NAME                   string `required:"true" env:"OPENSTACK_IMAGE_NAME"`
-	OPENSTACK_EXTERNAL_NETWORK_ID          string `required:"true" env:"OPENSTACK_EXTERNAL_NETWORK_ID"`
-	OPENSTACK_DNS_NAMESERVERS              string `required:"true" env:"OPENSTACK_DNS_NAMESERVERS"`
-	OPENSTACK_SSH_KEY_NAME                 string `required:"true" env:"OPENSTACK_SSH_KEY_NAME"`
-	OPENSTACK_CLOUD_CACERT_B64             string `required:"true" env:"OPENSTACK_CLOUD_CACERT_B64"`
-	OPENSTACK_CLOUD_PROVIDER_CONF_B64      string `required:"true" env:"OPENSTACK_CLOUD_PROVIDER_CONF_B64"`
-	OPENSTACK_CLOUD_YAML_B64               string `required:"true" env:"OPENSTACK_CLOUD_YAML_B64"`
-	OPENSTACK_FAILURE_DOMAIN               string `required:"true" env:"OPENSTACK_FAILURE_DOMAIN"`
-	OPENSTACK_CLOUD                        string `required:"true" env:"OPENSTACK_CLOUD"`
-	OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR string `required:"true" env:"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR"`
-	OPENSTACK_NODE_MACHINE_FLAVOR          string `required:"true" env:"OPENSTACK_NODE_MACHINE_FLAVOR"`
+	OpenstackImageName                 string `required:"true" env:"OPENSTACK_IMAGE_NAME"`
+	OpenstackExternalNetworkId         string `required:"true" env:"OPENSTACK_EXTERNAL_NETWORK_ID"`
+	OpenstackDNSNameservers            string `required:"true" env:"OPENSTACK_DNS_NAMESERVERS"`
+	OpenstackSshKeyName                string `required:"true" env:"OPENSTACK_SSH_KEY_NAME"`
+	OpenstackCloudCacertB64            string `required:"true" env:"OPENSTACK_CLOUD_CACERT_B64"`
+	OpenstackCloudProviderConfB64      string `required:"true" env:"OPENSTACK_CLOUD_PROVIDER_CONF_B64"`
+	OpenstackCloudYamlB64              string `required:"true" env:"OPENSTACK_CLOUD_YAML_B64"`
+	OpenstackFailureDomain             string `required:"true" env:"OPENSTACK_FAILURE_DOMAIN"`
+	OpenstackCloud                     string `required:"true" env:"OPENSTACK_CLOUD"`
+	OpenstackControlPlaneMachineFlavor string `required:"true" env:"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR"`
+	OpenstackNodeMachineFlavor         string `required:"true" env:"OPENSTACK_NODE_MACHINE_FLAVOR"`
+	KubernetesVersion                  string `required:"true" env:"KUBERNETES_VERSION"`
 }
 
-func LoadOpenStackConfig(path string) OpenStackConfiguration {
+func LoadOpenStackCredentials(path string) OpenStackConfiguration {
 	var config OpenStackConfiguration
 	if len(path) < 1 {
 		configor.Load(&config, DEFAULT_OPENSTACKCONFIG_PATH)
