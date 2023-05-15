@@ -8,7 +8,7 @@
 # OS_CLOUD=openstack or --os-cloud=openstack
 clouds:
   openstack:
-    auth:      
+    auth:
       auth_url: http://<Openstack-server>/identity
       username: <username>
       password: <password>
