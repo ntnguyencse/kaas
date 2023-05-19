@@ -6,8 +6,6 @@ metadata:
 spec:
   infrastructure:
   - name: openstack-v1
-    override:
-      kubernetesVersion: v1.25.0
     spec:
       name: openstack-small-cluster
       type: ClusterTemplate

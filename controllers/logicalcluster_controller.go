@@ -44,6 +44,10 @@ var (
 	loggerLL = ctrl.Log.WithName("Logical Cluster Controller")
 )
 
+const (
+	LogicalClusterFinalizer string = "logicalcluster.intent.automation.dcn.ssu.ac.kr"
+)
+
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters/finalizers,verbs=update

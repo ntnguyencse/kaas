@@ -65,6 +65,9 @@ type LogicalClusterStatus struct {
 	// Logical Cluster Conditions
 	// +optional
 	Conditions ConditionType `json:"conditions,omitempty"`
+
+	// Registration Status
+	Registration bool `json:"registration,omitempty"`
 }
 
 //+kubebuilder:object:root=true
