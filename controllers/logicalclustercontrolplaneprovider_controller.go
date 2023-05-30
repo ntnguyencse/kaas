@@ -117,7 +117,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) findObjectsForConfigMap(c
 	return []reconcile.Request{}
 }
 
-func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) intentv1.LogicalCluster, error {
+func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.LogicalCluster, error) {
 	// lclusters := intentv1.LogicalClusterList{}
 	lcluster := intentv1.LogicalCluster{}
 	// r.Client.List(ctx, &lclusters)
@@ -128,18 +128,19 @@ func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx contex
 
 	// Check error when get logical cluster corresponding in ownerRef
 	if err != nil {
-		loggerLKP.Error(err, "Error when get Logical Cluster in OwnerRef")
-		return  lcluster, err
+		if apierrors.IsNotFound(err) {
+			return lcluster, err
+		} else {
+			loggerLKP.Error(err, "Error when get Logical Cluster in OwnerRef")
+			return lcluster, err
+		}
 	}
-	if lcluster != nil {
-		return lcluster, error{"Empty Logical Cluster"}
-	} else {
-		return lcluster, nil
-	}
+	return lcluster, nil
+
 }
-func (r *LogicalClusterControlPlaneProviderReconciler) RegisterLogicalCLusterToEMCO(ctx context.Context, logicalCluster intentv1.LogicalCluster ) error {
+func (r *LogicalClusterControlPlaneProviderReconciler) RegisterLogicalCLusterToEMCO(ctx context.Context, logicalCluster intentv1.LogicalCluster) error {
 
 	// Init EMCO Client
-	
+
 	return nil
 }

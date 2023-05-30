@@ -21,6 +21,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Cluster Member State contains state of cluster member
+type ClusterMemberStatus struct {
+	// Cluster Name
+	ClusterName string `json:"clustername,omitempty"`
+	// Status of Cluster
+	Ready bool `json:"ready,omitempty"`
+	// Failure Message
+	// +optional
+	FailureMessage string `json:"failureMessage,omitempty"`
+	// Failure Reason
+	// +optional
+	FailureReason string `json:"failureReason,omitempty"`
+	// Logical Cluster Conditions
+	// +optional
+	Conditions ConditionType `json:"conditions,omitempty"`
+	// Registration Status of Member Cluster
+	Registration bool `json:"registration,omitempty"`
+}
+
 // LogicalClusterSpec defines the desired state of LogicalCluster
 type LogicalClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -55,7 +74,7 @@ type LogicalClusterStatus struct {
 	// Ready state of Logical cluster
 	Ready bool `json:"ready,omitempty"`
 	// State of Each Cluster Member
-	ClusterMemberState string `json:"clusterMemberState,omitempty"`
+	ClusterMemberStates []ClusterMemberStatus `json:"clusterMemberStates,omitempty"`
 	// Failure Message
 	// +optional
 	FailureMessage string `json:"failureMessage,omitempty"`
@@ -65,8 +84,13 @@ type LogicalClusterStatus struct {
 	// Logical Cluster Conditions
 	// +optional
 	Conditions ConditionType `json:"conditions,omitempty"`
-
-	// Registration Status
+	// InfrastructureReady is the state of the infrastructure provider.
+	// +optional
+	InfrastructureReady bool `json:"infrastructureReady,omitempty"`
+	// Logical Cluster Phase
+	// +optional
+	Phase ConditionType `json:"phase,omitempty"`
+	// Registration Status of Logical Cluster
 	Registration bool `json:"registration,omitempty"`
 }
 
@@ -93,4 +117,9 @@ type LogicalClusterList struct {
 
 func init() {
 	SchemeBuilder.Register(&LogicalCluster{}, &LogicalClusterList{})
+}
+
+// SetTypedPhase sets the Phase field to the string representation of ClusterPhase.
+func (c *LogicalClusterStatus) SetTypedPhase(p ClusterPhase) {
+	c.Phase = string(p)
 }
