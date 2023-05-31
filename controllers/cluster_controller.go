@@ -49,8 +49,11 @@ var (
 	loggerCL = ctrl.Log.WithName("Cluster Controller")
 )
 
-const NAMESPACE_DEFAULT string = "default"
-const STATUS_GENERATED string = "Generated"
+const (
+	ClusterFinalizer  string = "cluster.intent.automation.dcn.ssu.ac.kr"
+	NAMESPACE_DEFAULT string = "default"
+	STATUS_GENERATED  string = "Generated"
+)
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters/status,verbs=get;update;patch

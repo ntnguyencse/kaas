@@ -240,9 +240,31 @@ spec:
           status:
             description: LogicalClusterStatus defines the observed state of LogicalCluster
             properties:
-              clusterMemberState:
+              clusterMemberStates:
                 description: State of Each Cluster Member
-                type: string
+                items:
+                  description: Cluster Member State contains state of cluster member
+                  properties:
+                    clustername:
+                      description: Cluster Name
+                      type: string
+                    conditions:
+                      description: Logical Cluster Conditions
+                      type: string
+                    failureMessage:
+                      description: Failure Message
+                      type: string
+                    failureReason:
+                      description: Failure Reason
+                      type: string
+                    ready:
+                      description: Status of Cluster
+                      type: boolean
+                    registration:
+                      description: Registration Status of Member Cluster
+                      type: boolean
+                  type: object
+                type: array
               conditions:
                 description: Logical Cluster Conditions
                 type: string
@@ -252,8 +274,18 @@ spec:
               failureReason:
                 description: Failure Reason
                 type: string
+              infrastructureReady:
+                description: InfrastructureReady is the state of the infrastructure
+                  provider.
+                type: boolean
+              phase:
+                description: Logical Cluster Phase
+                type: string
               ready:
                 description: Ready state of Logical cluster
+                type: boolean
+              registration:
+                description: Registration Status of Logical Cluster
                 type: boolean
             type: object
         type: object

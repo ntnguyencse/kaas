@@ -21,7 +21,9 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	capiv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
@@ -100,6 +102,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) SetupWithManager(mgr ctrl
 		// For().
 		// For(&capiv1beta1.Cluster{}).
 		For(&capiv1alpha4.Cluster{}).
+		// For(&corev1.
 		// Watches(
 		// 	&source.Kind{Type: &capiv1beta1.ClusterClass{}},
 		// 	handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),
@@ -112,4 +115,32 @@ func (r *LogicalClusterControlPlaneProviderReconciler) SetupWithManager(mgr ctrl
 }
 func (r *LogicalClusterControlPlaneProviderReconciler) findObjectsForConfigMap(configMap client.Object) []reconcile.Request {
 	return []reconcile.Request{}
+}
+
+func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.LogicalCluster, error) {
+	// lclusters := intentv1.LogicalClusterList{}
+	lcluster := intentv1.LogicalCluster{}
+	// r.Client.List(ctx, &lclusters)
+	err := r.Client.Get(ctx, client.ObjectKey{
+		Name:      ownerRef.Name,
+		Namespace: req.Namespace,
+	}, &lcluster)
+
+	// Check error when get logical cluster corresponding in ownerRef
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return lcluster, err
+		} else {
+			loggerLKP.Error(err, "Error when get Logical Cluster in OwnerRef")
+			return lcluster, err
+		}
+	}
+	return lcluster, nil
+
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) RegisterLogicalCLusterToEMCO(ctx context.Context, logicalCluster intentv1.LogicalCluster) error {
+
+	// Init EMCO Client
+
+	return nil
 }

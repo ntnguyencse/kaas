@@ -88,6 +88,11 @@ type ClusterStatus struct {
 	// Failure Message
 	// +optional
 	FailureMessage string `json:"failureMessage,omitempty"`
+	// Cluster Phase
+	// +optional
+	Phase ConditionType `json:"phase,omitempty"`
+	// Registration Status of Cluster
+	Registration bool `json:"registration,omitempty"`
 }
 
 // +kubebuilder:object:root=true

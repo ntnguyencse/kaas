@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-logr/logr"
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,6 +43,10 @@ type LogicalClusterReconciler struct {
 
 var (
 	loggerLL = ctrl.Log.WithName("Logical Cluster Controller")
+)
+
+const (
+	LogicalClusterFinalizer string = "logicalcluster.intent.automation.dcn.ssu.ac.kr"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclusters,verbs=get;list;watch;create;update;patch;delete
@@ -75,16 +80,42 @@ func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// Check each cluster member
 	clusterMemberList := logicalCluster.Spec.Clusters
-	for _, clusterMember := range clusterMemberList {
+	for index, clusterMember := range clusterMemberList {
 		loggerLL.Info("Print ClusterMember:", logicalCluster.Name, clusterMember)
 		if clusterMember.ClusterRef != nil {
+			loggerLL.Info("ClusterRef != nil")
 			if len(clusterMember.ClusterRef.APIVersion) != 0 && len(clusterMember.ClusterRef.Kind) != 0 && len(clusterMember.ClusterRef.Name) != 0 {
 				loggerLL.Info("Checking Cluster Ref")
-				r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
+				cluster, err := r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
+				// Update Ref for cluster member
+				if err != nil {
+					logicalCluster.Spec.Clusters[index].ClusterRef = &corev1.ObjectReference{
+						Kind:       cluster.Kind,
+						APIVersion: cluster.APIVersion,
+						Name:       cluster.Name,
+						Namespace:  cluster.Namespace,
+					}
+				}
+				err = r.Client.Update(ctx, logicalCluster)
+				if err != nil {
+					loggerLL.Error(err, "Error when Update the Logical Cluster: Can not update Member Cluster's Ref 1")
+				}
 			}
 		} else {
 			loggerLL.Info("Create new Cluster Member")
-			r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
+			cluster, err := r.GetOrCreateCluster(ctx, logicalCluster, &clusterMember)
+			if err != nil {
+				logicalCluster.Spec.Clusters[index].ClusterRef = &corev1.ObjectReference{
+					Kind:       cluster.Kind,
+					APIVersion: cluster.APIVersion,
+					Name:       cluster.Name,
+					Namespace:  cluster.Namespace,
+				}
+			}
+			err = r.Client.Update(ctx, logicalCluster)
+			if err != nil {
+				loggerLL.Error(err, "Error when Update the Logical Cluster: Can not update Member Cluster's Ref 2")
+			}
 		}
 
 	}
