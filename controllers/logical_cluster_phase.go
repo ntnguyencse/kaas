@@ -32,5 +32,6 @@ func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileClusterPhase(ctx
 	// logicalCluster.Status
 	return nil
 }
-func SetLogicalClusterPhase()
+func SetLogicalClusterPhase() {
 
+}

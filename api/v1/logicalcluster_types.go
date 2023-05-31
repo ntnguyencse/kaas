@@ -89,7 +89,7 @@ type LogicalClusterStatus struct {
 	InfrastructureReady bool `json:"infrastructureReady,omitempty"`
 	// Logical Cluster Phase
 	// +optional
-	Phase ConditionType `json:"phase,omitempty"`
+	Phase ClusterPhase `json:"phase,omitempty"`
 	// Registration Status of Logical Cluster
 	Registration bool `json:"registration,omitempty"`
 }
@@ -121,5 +121,5 @@ func init() {
 
 // SetTypedPhase sets the Phase field to the string representation of ClusterPhase.
 func (c *LogicalClusterStatus) SetTypedPhase(p ClusterPhase) {
-	c.Phase = string(p)
+	c.Phase = p
 }
