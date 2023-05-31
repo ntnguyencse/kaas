@@ -37,6 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile" // Required for Watching
 	// Required for Watching
 	// intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	// emcoctl
+	emcoctl "github.com/ntnguyencse/L-KaaS/pkg/emcoclient"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -50,7 +52,8 @@ type LogicalClusterControlPlaneProviderReconciler struct {
 const timeoutRetryCreateLogicalCluster = 10 * time.Minute
 
 var (
-	loggerLKP = ctrl.Log.WithName("L-KaaS Control Plane Provider")
+	loggerLKP      = ctrl.Log.WithName("L-KaaS Control Plane Provider")
+	EMCOConfigFile = "/home/ubuntu/l-kaas/L-KaaS/pkg/emcoclient/.emco.yaml"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclustercontrolplaneproviders,verbs=get;list;watch;create;update;patch;delete
@@ -141,6 +144,16 @@ func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx contex
 func (r *LogicalClusterControlPlaneProviderReconciler) RegisterLogicalCLusterToEMCO(ctx context.Context, logicalCluster intentv1.LogicalCluster) error {
 
 	// Init EMCO Client
-
+	// Set Config File
+	emcoctl.SetConfigFilePath(EMCOConfigFile)
+	// Create values file
+	var valueFileString string
+	// Save values file
+	filePath, err := emcoctl.SaveValueFile("test-values.yaml", "/home/ubuntu/l-kaas/L-KaaS/pkg/emcoclient/test", &valueFileString)
+	if err != nil {
+		loggerLKP.Error(err, "Error: emcoctl.SaveValueFile test-values.yaml")
+	}
+	defer emcoctl.CleanUp(filePath)
+	// Set Arg
 	return nil
 }

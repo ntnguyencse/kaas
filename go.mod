@@ -3,6 +3,7 @@ module github.com/ntnguyencse/L-KaaS
 go 1.19
 
 require (
+	github.com/buildkite/interpolate v0.0.0-20200526001904-07f35b4ae251
 	github.com/go-logr/logr v1.2.4
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/go-yaml/yaml v2.1.0+incompatible

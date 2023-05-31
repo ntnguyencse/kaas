@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/buildkite/interpolate"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
@@ -42,6 +43,47 @@ func init() {
 // Set Config File Path
 func SetConfigFilePath(path string) {
 	cfgFile = path
+}
+func SaveValueFile(fileName string, folder string, valueString *string) (string, error) {
+	// If folder is empty, save file to current folder
+	if folder == "" {
+		folder, _ = os.Getwd()
+	}
+	filePath := folder + "/" + fileName
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	defer file.Close()
+	if err != nil {
+		fmt.Println(err, "Error when open file")
+		return "error Open", err
+	}
+	_, err = file.WriteString(*valueString)
+	if err != nil {
+		fmt.Println(err, "Error when write file")
+		return "error Write", err
+	}
+	return filePath, nil
+}
+func CleanUp(filePath string) error {
+	err := os.Remove(filePath)
+	if err != nil {
+		fmt.Println(err, "Error clean up file: "+filePath)
+		return err
+	}
+	fmt.Println("Cleanup file: " + filePath)
+	return nil
+}
+func InterpolateValueFile(templateString *string, values map[string]string) (string, error) {
+
+	var resultString string
+	values["HELLO_WORLD"] = "test"
+	mapEnv := interpolate.NewMapEnv(values)
+	resultString, err := interpolate.Interpolate(mapEnv, *templateString) //"Buildkite... ${HELLO_WORLD}}")
+	if err != nil {
+		fmt.Println("Error interpolate", err)
+		return "", err
+	}
+	fmt.Println(resultString)
+	return resultString, nil
 }
 
 // SetArg for root command

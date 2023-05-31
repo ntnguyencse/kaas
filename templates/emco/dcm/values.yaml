@@ -1,0 +1,38 @@
+PackagesPath: ${PACKAGESPATH}
+ProjectName: ${PROJECTNAME}
+ClusterProvider: ${CLUSTERPROVIDER}
+Cluster1: ${CLUSTERNAME}
+Cluster1Ref: ${CLUSTERREF}
+LogicalCloud: ${LOGICALCLOUD}
+AdminCloud: ${ADMINCLOUD}
+PrivilegedCloud: ${ADMINPRIVILEGEDCLOUD}
+StandardCloud: ${STANDARDCLOUD}
+PrivilegedNamespace: ${PRIVILEGEDNAMESPACE}
+StandardNamespace: ${STANDARDNAMESPACE}
+ClusterQuota: ${CLUSTERQUOTA}
+StandardPermission: standard-permission
+PrivilegedPermission1: privileged-permission-primary
+PrivilegedPermission2: privileged-permission-kube-system
+PrivilegedPermission3: privileged-permission-cluster
+CompositeApp: test-collectd
+HelmApp1: output/collectd.tar.gz
+ProfileApp1: output/collectd_profile.tar.gz
+CompositeProfile: collectd-composite-profile
+GenericPlacementIntent: collectd-placement-intent
+DeploymentIntent: collectd-deployment-intent-group
+Intent: intent
+ConfigmapFile: info.json
+RsyncPort: 30431
+GacPort: 30433
+OvnPort: 30432
+DtcPort: 30448
+NpsPort: 30438
+HostIP: ${HOSTIP}
+
+Clusters:
+  - Name: ${CLUSTERNAME}
+    KubeConfig: $KUBE_PATH
+Applist: 
+  - Name: collectd
+    Cluster:
+      - ${CLUSTERNAME}
