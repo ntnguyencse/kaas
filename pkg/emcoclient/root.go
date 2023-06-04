@@ -16,6 +16,11 @@ import (
 
 var cfgFile string
 
+const (
+	FlagDelete string = "delete"
+	FlagApply  string = "apply"
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "emco",
@@ -33,7 +38,9 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-
+func ExecWithError() error {
+	return rootCmd.Execute()
+}
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.emco.yaml)")

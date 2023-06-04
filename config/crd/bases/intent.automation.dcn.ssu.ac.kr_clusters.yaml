@@ -203,8 +203,14 @@ spec:
               failureReason:
                 description: Failure Reason
                 type: string
+              phase:
+                description: Cluster Phase
+                type: string
               ready:
                 description: Ready Status
+                type: boolean
+              registration:
+                description: Registration Status of Cluster
                 type: boolean
               repo:
                 description: Repo contains cluster package
