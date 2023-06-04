@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -37,6 +38,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile" // Required for Watching
 	// Required for Watching
 	// intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	// emcoctl
+	cloudfile "github.com/alexflint/go-cloudfile"
+	emcoctl "github.com/ntnguyencse/L-KaaS/pkg/emcoclient"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -50,7 +54,12 @@ type LogicalClusterControlPlaneProviderReconciler struct {
 const timeoutRetryCreateLogicalCluster = 10 * time.Minute
 
 var (
-	loggerLKP = ctrl.Log.WithName("L-KaaS Control Plane Provider")
+	loggerLKP                             = ctrl.Log.WithName("L-KaaS Control Plane Provider")
+	EMCOConfigFile                        = "/home/ubuntu/l-kaas/L-KaaS/pkg/emcoclient/.emco.yaml"
+	prerequistiesFilePath                 = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
+	instantiateFilePath                   = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
+	addClusterToLogicalClusterFilePath    = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
+	updateClusterToLogicalClusterFilePath = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclustercontrolplaneproviders,verbs=get;list;watch;create;update;patch;delete
@@ -138,9 +147,175 @@ func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx contex
 	return lcluster, nil
 
 }
-func (r *LogicalClusterControlPlaneProviderReconciler) RegisterLogicalCLusterToEMCO(ctx context.Context, logicalCluster intentv1.LogicalCluster) error {
+func (r *LogicalClusterControlPlaneProviderReconciler) RegisterLogicalCLusterToEMCO(ctx context.Context, flag string, logicalCluster intentv1.LogicalCluster) error {
 
 	// Init EMCO Client
-
+	// Set Config File
+	emcoctl.SetConfigFilePath(EMCOConfigFile)
+	// Create values file
+	var valueFileString string
+	// Save values file
+	filePath, err := emcoctl.SaveValueFile("test-values.yaml", "/home/ubuntu/l-kaas/L-KaaS/pkg/emcoclient/test", &valueFileString)
+	if err != nil {
+		loggerLKP.Error(err, "Error: emcoctl.SaveValueFile test-values.yaml")
+	}
+	defer emcoctl.CleanUp(filePath)
+	// Set Arg
 	return nil
+}
+
+// Prerequisites Logical Cluster
+func PrerequisitesLogicalCluster(flag string, emcoConfigPath string, prerequisitePath string, valuePath string) error {
+	emcoctl.SetConfigFilePath(emcoConfigPath)
+	args := []string{
+		"--config",
+		emcoConfigPath,
+		flag,
+		"-f",
+		prerequisitePath,
+		"-v",
+		valuePath,
+	}
+	emcoctl.SetArgs(args)
+	emcoctl.SetDebugFlags()
+	return emcoctl.ExecWithError()
+}
+
+// Get Template File
+func GetTemplateFile(url string) (string, error) {
+	url = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
+	r, err := cloudfile.Open(url)
+	if err != nil {
+		loggerLKP.Error(err, "Error read file frome github")
+		return "", err
+	}
+
+	defer r.Close()
+	strBinary, err := io.ReadAll(r)
+	result := string(strBinary)
+	return result, err
+
+}
+
+// Flag:
+// "apply"
+// "delete"
+func (r *LogicalClusterControlPlaneProviderReconciler) CreateLogicalCluster(ctx context.Context, flag string, logicalCluster intentv1.LogicalCluster) error {
+	// Insert config to EMCOctl
+	emcoctl.SetConfigFilePath(EMCOConfigFile)
+	// Get template File
+	var templateString string
+	var valuesMap map[string]string
+	// Create Value file for Logical Cluster
+	// values.yaml
+	valueString, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	if err != nil {
+		loggerLKP.Error(err, "Error when interpolate Value File")
+	}
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+logicalCluster.Name+"/", &valueString)
+	// defer emcoctl.CleanUp(valueFilePath)
+	// Apply to EMCO
+	var emptyOptions []string
+	err = ApplyCommand(ctx, flag, prerequistiesFilePath, valueFilePath, emptyOptions)
+
+	return err
+}
+
+func ApplyCommand(ctx context.Context, flag string, fileApplyPath string, valueFilePath string, options []string) error {
+	args := []string{
+		flag,
+		"-f",
+		fileApplyPath,
+		"-v",
+		valueFilePath,
+	}
+	args = append(args, options...)
+	emcoctl.SetArgs(args)
+	emcoctl.SetDebugFlags()
+
+	return emcoctl.ExecWithError()
+}
+
+func (r *LogicalClusterControlPlaneProviderReconciler) InstantiateLogicalCluster(ctx context.Context, flag string, logicalCluster intentv1.LogicalCluster) error {
+	// Insert config to EMCOctl
+	emcoctl.SetConfigFilePath(EMCOConfigFile)
+	// Get template File
+	var templateString string
+	var valuesMap map[string]string
+	// Create Value file for Logical Cluster
+	// values.yaml
+	valueString, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	if err != nil {
+		loggerLKP.Error(err, "Error when interpolate Value File")
+	}
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+logicalCluster.Name+"-instantiate/", &valueString)
+	defer emcoctl.CleanUp(valueFilePath)
+	// Apply to EMCO
+	var emptyOptions []string
+	err = ApplyCommand(ctx, flag, prerequistiesFilePath, valueFilePath, emptyOptions)
+
+	return err
+}
+
+func (r *LogicalClusterControlPlaneProviderReconciler) AddClusterToLogicalCluster(ctx context.Context, flag string, cluster intentv1.Cluster) error {
+	// Insert config to EMCOctl
+	emcoctl.SetConfigFilePath(EMCOConfigFile)
+	// Get template File
+	var templateString string
+	var valuesMap map[string]string
+	// Create Value file for Logical Cluster
+	// values.yaml
+	valueString, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	if err != nil {
+		loggerLKP.Error(err, "Error when interpolate Value File")
+	}
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+cluster.Name+"-addcluster/", &valueString)
+	defer emcoctl.CleanUp(valueFilePath)
+	// Apply to EMCO
+	var emptyOptions []string
+	err = ApplyCommand(ctx, flag, prerequistiesFilePath, valueFilePath, emptyOptions)
+
+	return err
+}
+
+func (r *LogicalClusterControlPlaneProviderReconciler) UpdateClusterToLogicalCluster(ctx context.Context, flag string, cluster intentv1.Cluster) error {
+	// Insert config to EMCOctl
+	emcoctl.SetConfigFilePath(EMCOConfigFile)
+	// Get template File
+	var templateString string
+	var valuesMap map[string]string
+	// Create Value file for Logical Cluster
+	// values.yaml
+	valueString, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	if err != nil {
+		loggerLKP.Error(err, "Error when interpolate Value File")
+	}
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+cluster.Name+"-updatecluster/", &valueString)
+	defer emcoctl.CleanUp(valueFilePath)
+	// Apply to EMCO
+	var emptyOptions []string
+	err = ApplyCommand(ctx, flag, prerequistiesFilePath, valueFilePath, emptyOptions)
+
+	return err
+}
+
+func (r *LogicalClusterControlPlaneProviderReconciler) InstantiateCompositeApplication(ctx context.Context, flag string, cluster intentv1.Cluster) error {
+	// Insert config to EMCOctl
+	emcoctl.SetConfigFilePath(EMCOConfigFile)
+	// Get template File
+	var templateString string
+	var valuesMap map[string]string
+	// Create Value file for Logical Cluster
+	// values.yaml
+	valueString, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	if err != nil {
+		loggerLKP.Error(err, "Error when interpolate Value File")
+	}
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+cluster.Name+"-instantiate-compositeapp/", &valueString)
+	defer emcoctl.CleanUp(valueFilePath)
+	// Apply to EMCO
+	var emptyOptions []string
+	err = ApplyCommand(ctx, flag, prerequistiesFilePath, valueFilePath, emptyOptions)
+
+	return err
 }
