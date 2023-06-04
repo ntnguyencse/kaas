@@ -78,6 +78,8 @@ func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
+	CreateValueFileForPrerequisites(logicalCluster)
+
 	// Check each cluster member
 	clusterMemberList := logicalCluster.Spec.Clusters
 	for index, clusterMember := range clusterMemberList {

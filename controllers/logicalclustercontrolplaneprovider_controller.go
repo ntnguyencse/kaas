@@ -183,18 +183,46 @@ func PrerequisitesLogicalCluster(flag string, emcoConfigPath string, prerequisit
 
 // Get Template File
 func GetTemplateFile(url string) (string, error) {
-	url = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
+	url = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
 	r, err := cloudfile.Open(url)
 	if err != nil {
-		loggerLKP.Error(err, "Error read file frome github")
+		loggerLKP.Error(err, "Error read file from remote url: "+url)
 		return "", err
 	}
 
 	defer r.Close()
 	strBinary, err := io.ReadAll(r)
+	if err != nil {
+		loggerLKP.Error(err, "Error read file GetTemplateFile io.ReadAll: "+url)
+		return "", err
+	}
 	result := string(strBinary)
-	return result, err
+	return result, nil
 
+}
+func CreateValueFileForPrerequisites(lCluster *intentv1.LogicalCluster) (string, error) {
+	valuesMap := map[string]string{
+		"PROJECTNAME":       "dcn",
+		"CLUSTERPROVIDER":   "starlab",
+		"CLUSTERNAME":       lCluster.Spec.Clusters[0].Name,
+		"CLUSTERREF":        lCluster.Name + "-ref",
+		"LOGICALCLOUD":      lCluster.Name,
+		"STANDARDNAMESPACE": "default",
+		"HOSTIP":            "192.168.40.140",
+		"KUBE_PATH":         "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml",
+	}
+	templateString, err := GetTemplateFile("test")
+	if err != nil {
+		loggerLKP.Error(err, "Error wwhen get remote file github")
+		return "", err
+	}
+	outputStr, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	if err != nil {
+		loggerLKP.Error(err, "Error wwhen get remote file github")
+		return "", err
+	}
+	loggerLKP.Info("Print template: ", "outString", outputStr)
+	return templateString, nil
 }
 
 // Flag:
