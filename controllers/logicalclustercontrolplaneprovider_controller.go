@@ -97,6 +97,16 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 	CAPOStatus := CAPOClusters.DeepCopy().Status
 	// Print CAPO Status
 	loggerLKP.Info("Print CAPO STATUS", "CAPO:", CAPOStatus)
+	// Get Logical Cluister form OwnerRef of CAPO Cluster
+	ownerRef := CAPOClusters.ObjectMeta.OwnerReferences[0]
+	loggerLKP.Info("Print OwnerReferences", "OwnerReferences:", CAPOClusters.ObjectMeta.OwnerReferences)
+	ownerLCluster, err := r.GetClusterOwnerObject(ctx, req, &ownerRef)
+	if err != nil {
+		loggerLKP.Error(err, "Error when get owner's object")
+		return ctrl.Result{}, nil
+	}
+	// Print Owner's CAPO Cluster
+	loggerLKP.Info("Print Owner's CAPO cluster", "Owner", ownerLCluster.Name)
 
 	// Separate status object:
 	// CAPOPhaseStatus := CAPOStatus.Phase
@@ -126,7 +136,29 @@ func (r *LogicalClusterControlPlaneProviderReconciler) findObjectsForConfigMap(c
 	return []reconcile.Request{}
 }
 
-func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.LogicalCluster, error) {
+func (r *LogicalClusterControlPlaneProviderReconciler) GetClusterOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.Cluster, error) {
+	// lclusters := intentv1.LogicalClusterList{}
+	lcluster := intentv1.Cluster{}
+	// r.Client.List(ctx, &lclusters)
+	err := r.Client.Get(ctx, client.ObjectKey{
+		Name:      ownerRef.Name,
+		Namespace: req.Namespace,
+	}, &lcluster)
+
+	// Check error when get logical cluster corresponding in ownerRef
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			loggerLKP.Error(err, "Error when get Cluster in OwnerRef not Found: ")
+			return lcluster, err
+		} else {
+			loggerLKP.Error(err, "Error when get Cluster in OwnerRef")
+			return lcluster, err
+		}
+	}
+	return lcluster, nil
+
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) GetLogicalClusterOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.LogicalCluster, error) {
 	// lclusters := intentv1.LogicalClusterList{}
 	lcluster := intentv1.LogicalCluster{}
 	// r.Client.List(ctx, &lclusters)
@@ -138,6 +170,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx contex
 	// Check error when get logical cluster corresponding in ownerRef
 	if err != nil {
 		if apierrors.IsNotFound(err) {
+			loggerLKP.Error(err, "Error when get Logical Cluster in OwnerRef not Found: ")
 			return lcluster, err
 		} else {
 			loggerLKP.Error(err, "Error when get Logical Cluster in OwnerRef")
