@@ -102,12 +102,23 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 	loggerLKP.Info("Print OwnerReferences", "OwnerReferences:", CAPOClusters.ObjectMeta.OwnerReferences)
 	ownerLCluster, err := r.GetClusterOwnerObject(ctx, req, &ownerRef)
 	if err != nil {
-		loggerLKP.Error(err, "Error when get owner's object")
+		loggerLKP.Error(err, "Error when get cluster owner's object")
 		return ctrl.Result{}, nil
 	}
 	// Print Owner's CAPO Cluster
 	loggerLKP.Info("Print Owner's CAPO cluster", "Owner", ownerLCluster.Name)
+	// Get Logical Cluster Owner CAPO Cluster
+	RefOfLogicalCluster := ownerLCluster.ObjectMeta.OwnerReferences[0]
+	logicalCluster, err := r.GetLogicalClusterOwnerObject(ctx, req, &RefOfLogicalCluster)
+	if err != nil {
+		loggerLKP.Error(err, "Error when get cluster owner's object")
+		return ctrl.Result{}, nil
+	}
+	// Print Owner's CAPO Cluster
+	loggerLKP.Info("Print Owner's CAPO cluster", "Owner", logicalCluster.Name)
+	// ------ CHECK STATUS OF CAPO CLUSTER------------------//
 
+	//------CACULATE THE STATUS OF LOGICAL CLUSTER----------//
 	// Separate status object:
 	// CAPOPhaseStatus := CAPOStatus.Phase
 
