@@ -63,8 +63,15 @@ const (
 	TLSKeyDataName = "tls.key"
 
 	// TLSCrtDataName is the key used to store a TLS certificate in the secret's data field.
-	TLSCrtDataName         = "tls.crt"
-	KubeConfigSecretSuffix = "kubeconfig"
+	TLSCrtDataName                        = "tls.crt"
+	KubeConfigSecretSuffix                = "kubeconfig"
+	EMCOApplyFlag                         = "apply"
+	EMCODeleteFlag                        = "delete"
+	EMCOConfigPath                        = "/home/ubuntu/l-kaas/L-KaaS/pkg/emcoclient/.emco.yaml"
+	prerequisitesTemplateUrl              = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
+	registrationLogicalClusterTemplateUrl = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/1stcluster.yaml"
+	instantiateLogicalClusterTemplateUrl  = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/instantiate-lc.yaml"
+	prerequisitesValuesTemplateUrl        = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
 )
 
 const timeoutRetryCreateLogicalCluster = 10 * time.Minute
@@ -193,11 +200,34 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 	// Register Logical Cluster if at least one cluster turn "Ready" and not yet registration
 	if len(logicalCluster.Status.ClusterMemberStates) == 1 {
 		if !logicalCluster.Status.ClusterMemberStates[0].Registration {
+			var err error
 			// TODO Create EMCO Cluster Provider
-			// TODO Create Logical Cluster in EMCO
+			folderCAPOCluster := "/tmp/" + logicalCluster.Name + "/"
 			// TODO Get kubeconfig of Cluster
+			// Get KubeCOnfig
+			kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
+			if err != nil {
+				loggerLKP.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
+			}
+			kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".yaml"), folderCAPOCluster, &kubeconfig)
+			prereString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
 			// TODO Add Cluster to EMCO Logical CLuster
+			prereValueFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &prereString)
+			prereTemplateFileContent, err := GetTemplateFile(prerequisitesTemplateUrl)
+			if err != nil {
+				loggerLKP.Error(err, "Error when get Template file")
+			}
+			prereTemplateFilePath, err := emcoctl.SaveValueFile("prequisitesTamplate.yaml", folderCAPOCluster, &prereTemplateFileContent)
+			// TODO Create Logical Cluster in EMCO
+			PrerequisitesLogicalCluster(EMCOApplyFlag, EMCOConfigPath, prereTemplateFilePath, prereValueFilePath)
+
 		}
+	}
+
+	// Find status of cluster and check if registration is false
+	// Only self add cluster to logical cluster
+	if len(logicalCluster.Status.ClusterMemberStates) > 1 {
+
 	}
 
 	//------CACULATE THE STATUS OF LOGICAL CLUSTER----------//
@@ -323,7 +353,7 @@ func PrerequisitesLogicalCluster(flag string, emcoConfigPath string, prerequisit
 
 // Get Template File
 func GetTemplateFile(url string) (string, error) {
-	url = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
+	// url = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
 	r, err := cloudfile.Open(url)
 	if err != nil {
 		loggerLKP.Error(err, "Error read file from remote url: "+url)
@@ -340,29 +370,33 @@ func GetTemplateFile(url string) (string, error) {
 	return result, nil
 
 }
-func CreateValueFileForPrerequisites(lCluster *intentv1.LogicalCluster) (string, error) {
+
+// Create Value File for Prerequisites
+func CreateLogicalClusterPrerequisitesValueContent(lCluster *intentv1.LogicalCluster, capoCluster *capiv1alpha4.Cluster, kubePath string) (string, error) {
+	hostAPIEndpoint := capoCluster.Spec.ControlPlaneEndpoint.Host
 	valuesMap := map[string]string{
 		"PROJECTNAME":       "dcn",
 		"CLUSTERPROVIDER":   "starlab",
-		"CLUSTERNAME":       lCluster.Spec.Clusters[0].Name,
-		"CLUSTERREF":        lCluster.Name + "-ref",
+		"CLUSTERNAME":       capoCluster.Name,
+		"CLUSTERREF":        capoCluster.Name + "-ref",
 		"LOGICALCLOUD":      lCluster.Name,
 		"STANDARDNAMESPACE": "default",
-		"HOSTIP":            "192.168.40.140",
-		"KUBE_PATH":         "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml",
+		"HOSTIP":            hostAPIEndpoint,
+		// "KUBE_PATH":         "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml",
+		"KUBE_PATH": kubePath,
 	}
-	templateString, err := GetTemplateFile("test")
+	valuestemplateString, err := GetTemplateFile(prerequisitesValuesTemplateUrl)
 	if err != nil {
 		loggerLKP.Error(err, "Error wwhen get remote file github")
 		return "", err
 	}
-	outputStr, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	outputStr, err := emcoctl.InterpolateValueFile(&valuestemplateString, valuesMap)
 	if err != nil {
-		loggerLKP.Error(err, "Error wwhen get remote file github")
+		loggerLKP.Error(err, "Error wwhen interpolate prerequisite value file")
 		return "", err
 	}
-	loggerLKP.Info("Print template: ", "outString", outputStr)
-	return templateString, nil
+	loggerLKP.Info("Print value file: ", "outString", outputStr)
+	return outputStr, nil
 }
 
 // Flag:
