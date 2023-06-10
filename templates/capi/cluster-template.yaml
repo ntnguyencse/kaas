@@ -12,6 +12,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
@@ -22,6 +23,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 spec:
   template:
     spec:
@@ -52,6 +54,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 spec:
   clusterNetwork:
     pods:
@@ -76,6 +79,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 spec:
   clusterName: ${CLUSTER_NAME}
   replicas: ${WORKER_MACHINE_COUNT}
@@ -105,6 +109,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
@@ -170,6 +175,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 spec:
   apiServerLoadBalancer:
     enabled: true
@@ -192,6 +198,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 spec:
   template:
     spec:
@@ -212,6 +219,7 @@ metadata:
       kind: ${CLUSTER_OWNER_KIND}
       name: ${CLUSTER_OWNER_NAME}
       uid: ${CLUSTER_OWNER_UID}
+      blockOwnerDeletion: true
 spec:
   template:
     spec:

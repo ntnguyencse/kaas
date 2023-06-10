@@ -82,7 +82,6 @@ func CleanUp(filePath string) error {
 func InterpolateValueFile(templateString *string, values map[string]string) (string, error) {
 
 	var resultString string
-	values["HELLO_WORLD"] = "test"
 	mapEnv := interpolate.NewMapEnv(values)
 	resultString, err := interpolate.Interpolate(mapEnv, *templateString) //"Buildkite... ${HELLO_WORLD}}")
 	if err != nil {

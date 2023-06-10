@@ -18,11 +18,15 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/go-logr/logr"
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,6 +54,18 @@ type LogicalClusterControlPlaneProviderReconciler struct {
 	l      logr.Logger
 	s      *json.Serializer
 }
+
+const (
+	// KubeconfigDataName is the key used to store a Kubeconfig in the secret's data field.
+	KubeconfigDataName = "value"
+
+	// TLSKeyDataName is the key used to store a TLS private key in the secret's data field.
+	TLSKeyDataName = "tls.key"
+
+	// TLSCrtDataName is the key used to store a TLS certificate in the secret's data field.
+	TLSCrtDataName         = "tls.crt"
+	KubeConfigSecretSuffix = "kubeconfig"
+)
 
 const timeoutRetryCreateLogicalCluster = 10 * time.Minute
 
@@ -97,10 +113,111 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 	CAPOStatus := CAPOClusters.DeepCopy().Status
 	// Print CAPO Status
 	loggerLKP.Info("Print CAPO STATUS", "CAPO:", CAPOStatus)
+	// Get Logical Cluister form OwnerRef of CAPO Cluster
+	ownerRef := CAPOClusters.ObjectMeta.OwnerReferences[0]
+	loggerLKP.Info("Print OwnerReferences", "OwnerReferences:", CAPOClusters.ObjectMeta.OwnerReferences)
+	ownerLCluster, err := r.GetClusterOwnerObject(ctx, req, &ownerRef)
+	if err != nil {
+		loggerLKP.Error(err, "Error when get cluster owner's object")
+		return ctrl.Result{}, nil
+	}
+	// Print Owner's CAPO Cluster
+	loggerLKP.Info("Print Owner's CAPO cluster", "Owner", ownerLCluster.Name)
+	// Get Logical Cluster Owner CAPO Cluster
+	RefOfLogicalCluster := ownerLCluster.ObjectMeta.OwnerReferences[0]
+	logicalCluster, err := r.GetLogicalClusterOwnerObject(ctx, req, &RefOfLogicalCluster)
+	if err != nil {
+		loggerLKP.Error(err, "Error when get cluster owner's object")
+		return ctrl.Result{}, nil
+	}
+	// Print Owner's CAPO Cluster
+	loggerLKP.Info("Print Owner's CAPO cluster", "Owner", logicalCluster.Name)
 
+	//
+	// ------ CHECK STATUS OF CAPO CLUSTER------------------//
+	//
+	// If Ready status of logical cluster and at least have one status member
+	//
+	// Base on Capo Cluster Status, Register logical cluster to EMCO
+	// Compare Cluster Member status with Each Member Cluster Status
+	//
+	lClusterMembersStatus := logicalCluster.Status.ClusterMemberStates
+	// Find the record of current Cluster inside status:
+	idx, _, err := FindMemberStatusCorresspondToClusterName(&lClusterMembersStatus, CAPOClusters.Name)
+	// TODO: How to check status of current CLuster
+	lenOfLogicalClusterStatus := len(lClusterMembersStatus)
+	lenOfLogicalClusterMember := len(logicalCluster.Spec.Clusters)
+	capoStatus := CAPOClusters.Status
+	if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
+		ownerLCluster.Status.Ready = true
+
+	} else {
+		ownerLCluster.Status.Ready = false
+	}
+	if lenOfLogicalClusterStatus < lenOfLogicalClusterMember {
+		if err != nil {
+			// Add cluster status to Logical Cluster status
+			// Update status of cluster
+			loggerLKP.Info("Print ownerLCluster", "ownerLCluster", ownerLCluster)
+			loggerLKP.Info("Print capoStatus", "capoStatus", capoStatus)
+			ownerLCluster.Status.Phase = intentv1.ConditionType(capoStatus.Phase)
+			if string(ownerLCluster.Status.Phase) != string(capiv1alpha4.ClusterPhaseProvisioned) {
+				ownerLCluster.Status.FailureMessage = *capoStatus.FailureMessage
+				ownerLCluster.Status.FailureReason = string(*capoStatus.FailureReason)
+			} else {
+				ownerLCluster.Status.FailureMessage = ""
+				ownerLCluster.Status.FailureReason = ""
+			}
+			// Update status of L-kaas logical cluster
+			memberState := intentv1.ClusterMemberStatus{
+				ClusterName:    ownerLCluster.Name,
+				Ready:          ownerLCluster.Status.Ready,
+				FailureMessage: ownerLCluster.Status.FailureMessage,
+				FailureReason:  ownerLCluster.Status.FailureReason,
+				// Registration:   ownerLCluster.Status.Registration,
+			}
+
+			logicalCluster.Status.ClusterMemberStates = append(logicalCluster.Status.ClusterMemberStates, memberState)
+		}
+
+	} else {
+		// Update Logical Cluster status
+		if err != nil && idx != -1 {
+			logicalCluster.Status.ClusterMemberStates[idx].Ready = ownerLCluster.Status.Ready
+			logicalCluster.Status.ClusterMemberStates[idx].FailureMessage = ownerLCluster.Status.FailureMessage
+			logicalCluster.Status.ClusterMemberStates[idx].FailureReason = ownerLCluster.Status.FailureReason
+			logicalCluster.Status.ClusterMemberStates[idx].Registration = ownerLCluster.Status.Registration
+		}
+	}
+
+	// Register Logical Cluster if at least one cluster turn "Ready" and not yet registration
+	if len(logicalCluster.Status.ClusterMemberStates) == 1 {
+		if !logicalCluster.Status.ClusterMemberStates[0].Registration {
+			// TODO Create EMCO Cluster Provider
+			// TODO Create Logical Cluster in EMCO
+			// TODO Get kubeconfig of Cluster
+			// TODO Add Cluster to EMCO Logical CLuster
+		}
+	}
+
+	//------CACULATE THE STATUS OF LOGICAL CLUSTER----------//
 	// Separate status object:
 	// CAPOPhaseStatus := CAPOStatus.Phase
 
+	// DO Update the changes to API Server
+	// DO Update status L-KaaS Cluster
+	errUpdate := r.Client.Update(ctx, &ownerLCluster)
+	if errUpdate != nil {
+		loggerLKP.Error(errUpdate, "Error when update LKaaS cluster status")
+		return ctrl.Result{}, errUpdate
+	}
+	// Do Update status L-KaaS Logical Cluster
+	//
+	errUpdate = r.Client.Update(ctx, &logicalCluster)
+	if errUpdate != nil {
+		loggerLKP.Error(errUpdate, "Error when update LKaaS logical cluster status")
+		return ctrl.Result{}, errUpdate
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -126,7 +243,29 @@ func (r *LogicalClusterControlPlaneProviderReconciler) findObjectsForConfigMap(c
 	return []reconcile.Request{}
 }
 
-func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.LogicalCluster, error) {
+func (r *LogicalClusterControlPlaneProviderReconciler) GetClusterOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.Cluster, error) {
+	// lclusters := intentv1.LogicalClusterList{}
+	lcluster := intentv1.Cluster{}
+	// r.Client.List(ctx, &lclusters)
+	err := r.Client.Get(ctx, client.ObjectKey{
+		Name:      ownerRef.Name,
+		Namespace: req.Namespace,
+	}, &lcluster)
+
+	// Check error when get logical cluster corresponding in ownerRef
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			loggerLKP.Error(err, "Error when get Cluster in OwnerRef not Found: ")
+			return lcluster, err
+		} else {
+			loggerLKP.Error(err, "Error when get Cluster in OwnerRef")
+			return lcluster, err
+		}
+	}
+	return lcluster, nil
+
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) GetLogicalClusterOwnerObject(ctx context.Context, req ctrl.Request, ownerRef *metav1.OwnerReference) (intentv1.LogicalCluster, error) {
 	// lclusters := intentv1.LogicalClusterList{}
 	lcluster := intentv1.LogicalCluster{}
 	// r.Client.List(ctx, &lclusters)
@@ -138,6 +277,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) GetOwnerObject(ctx contex
 	// Check error when get logical cluster corresponding in ownerRef
 	if err != nil {
 		if apierrors.IsNotFound(err) {
+			loggerLKP.Error(err, "Error when get Logical Cluster in OwnerRef not Found: ")
 			return lcluster, err
 		} else {
 			loggerLKP.Error(err, "Error when get Logical Cluster in OwnerRef")
@@ -183,18 +323,46 @@ func PrerequisitesLogicalCluster(flag string, emcoConfigPath string, prerequisit
 
 // Get Template File
 func GetTemplateFile(url string) (string, error) {
-	url = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
+	url = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
 	r, err := cloudfile.Open(url)
 	if err != nil {
-		loggerLKP.Error(err, "Error read file frome github")
+		loggerLKP.Error(err, "Error read file from remote url: "+url)
 		return "", err
 	}
 
 	defer r.Close()
 	strBinary, err := io.ReadAll(r)
+	if err != nil {
+		loggerLKP.Error(err, "Error read file GetTemplateFile io.ReadAll: "+url)
+		return "", err
+	}
 	result := string(strBinary)
-	return result, err
+	return result, nil
 
+}
+func CreateValueFileForPrerequisites(lCluster *intentv1.LogicalCluster) (string, error) {
+	valuesMap := map[string]string{
+		"PROJECTNAME":       "dcn",
+		"CLUSTERPROVIDER":   "starlab",
+		"CLUSTERNAME":       lCluster.Spec.Clusters[0].Name,
+		"CLUSTERREF":        lCluster.Name + "-ref",
+		"LOGICALCLOUD":      lCluster.Name,
+		"STANDARDNAMESPACE": "default",
+		"HOSTIP":            "192.168.40.140",
+		"KUBE_PATH":         "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml",
+	}
+	templateString, err := GetTemplateFile("test")
+	if err != nil {
+		loggerLKP.Error(err, "Error wwhen get remote file github")
+		return "", err
+	}
+	outputStr, err := emcoctl.InterpolateValueFile(&templateString, valuesMap)
+	if err != nil {
+		loggerLKP.Error(err, "Error wwhen get remote file github")
+		return "", err
+	}
+	loggerLKP.Info("Print template: ", "outString", outputStr)
+	return templateString, nil
 }
 
 // Flag:
@@ -318,4 +486,38 @@ func (r *LogicalClusterControlPlaneProviderReconciler) InstantiateCompositeAppli
 	err = ApplyCommand(ctx, flag, prerequistiesFilePath, valueFilePath, emptyOptions)
 
 	return err
+}
+func FindMemberStatusCorresspondToClusterName(memberStatus *[]intentv1.ClusterMemberStatus, clusterName string) (int, intentv1.ClusterMemberStatus, error) {
+	for index, item := range *memberStatus {
+		if item.ClusterName == clusterName {
+			return index, item, nil
+		}
+	}
+
+	return -1, intentv1.ClusterMemberStatus{}, errors.New("Could not find member status in array")
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) getKubeConfigCluster(ctx context.Context, clusterName, nameSpace string) (string, error) {
+	secret := &corev1.Secret{}
+	secretKey := client.ObjectKey{
+		Namespace: nameSpace,
+		Name:      Name(clusterName, KubeConfigSecretSuffix),
+	}
+	if err := r.Get(ctx, secretKey, secret); err != nil {
+		return "nil", err
+	}
+	secretBytes, err := toKubeconfigBytes(secret)
+	return string(secretBytes), err
+}
+
+func toKubeconfigBytes(out *corev1.Secret) ([]byte, error) {
+	data, ok := out.Data[KubeconfigDataName]
+	if !ok {
+		return nil, errors.Errorf("missing key %q in secret data", KubeconfigDataName)
+	}
+	return data, nil
+}
+
+// Name returns the name of the secret for a cluster.
+func Name(cluster string, suffix string) string {
+	return fmt.Sprintf("%s-%s", cluster, suffix)
 }
