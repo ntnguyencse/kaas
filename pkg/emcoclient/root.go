@@ -4,6 +4,7 @@
 package emcoctl
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -56,8 +57,14 @@ func SaveValueFile(fileName string, folder string, valueString *string) (string,
 	if folder == "" {
 		folder, _ = os.Getwd()
 	}
+	if _, err := os.Stat(folder); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(folder, os.ModePerm)
+		if err != nil {
+			fmt.Println(err, "Error when create folder")
+		}
+	}
 	filePath := folder + "/" + fileName
-	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0600)
 	defer file.Close()
 	if err != nil {
 		fmt.Println(err, "Error when open file")

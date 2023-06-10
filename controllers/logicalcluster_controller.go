@@ -78,7 +78,7 @@ func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	CreateValueFileForPrerequisites(logicalCluster)
+	// CreateValueFileForPrerequisites(logicalCluster)
 
 	// Check each cluster member
 	clusterMemberList := logicalCluster.Spec.Clusters
