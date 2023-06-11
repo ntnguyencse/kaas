@@ -57,13 +57,19 @@ func SaveValueFile(fileName string, folder string, valueString *string) (string,
 	if folder == "" {
 		folder, _ = os.Getwd()
 	}
+	// Remove file before
+	fmt.Println("Remove file: ", folder+fileName)
+	e := os.Remove(folder + fileName)
+	if e != nil {
+		fmt.Println(e, "Error when remove folder")
+	}
 	if _, err := os.Stat(folder); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(folder, os.ModePerm)
 		if err != nil {
 			fmt.Println(err, "Error when create folder")
 		}
 	}
-	filePath := folder + "/" + fileName
+	filePath := folder + fileName
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0600)
 	defer file.Close()
 	if err != nil {

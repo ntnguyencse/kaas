@@ -183,7 +183,7 @@ func getCredentialsForOpenStackProvider(configPath string) (map[string]string, e
 	}
 
 	providerConfigLoaded := config.LoadOpenStackCredentials(configPath)
-	loggerCL.Info("Print LoadOpenStackCredentials", "Configs", providerConfigLoaded)
+	// loggerCL.Info("Print LoadOpenStackCredentials", "Configs", providerConfigLoaded)
 	secrets := map[string]string{
 		"OPENSTACK_IMAGE_NAME":                   providerConfigLoaded.OpenstackImageName,
 		"OPENSTACK_EXTERNAL_NETWORK_ID":          providerConfigLoaded.OpenstackExternalNetworkId,

@@ -224,14 +224,14 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 	// if !logicalCluster.Status.ClusterMemberStates[0].Registration {
 	// var err error
 	// TODO Create EMCO Cluster Provider
-	folderCAPOCluster := "/tmp/" + logicalCluster.Name
+	folderCAPOCluster := "/tmp/" + logicalCluster.Name + "/"
 	// TODO Get kubeconfig of Cluster
 	// Get KubeCOnfig
 	kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
 	if err != nil {
 		loggerLKP.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
 	}
-	kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".yaml"), folderCAPOCluster, &kubeconfig)
+	kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
 	prereString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
 	// TODO Add Cluster to EMCO Logical CLuster
 	prereValueFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &prereString)
@@ -582,7 +582,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) InstantiateLogicalCluster
 	if err != nil {
 		loggerLKP.Error(err, "Error when interpolate Value File")
 	}
-	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+logicalCluster.Name+"-instantiate/", &valueString)
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+logicalCluster.Name+"/", &valueString)
 	defer emcoctl.CleanUp(valueFilePath)
 	// Apply to EMCO
 	var emptyOptions []string
@@ -603,7 +603,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) AddClusterToLogicalCluste
 	if err != nil {
 		loggerLKP.Error(err, "Error when interpolate Value File")
 	}
-	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+cluster.Name+"-addcluster/", &valueString)
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+cluster.Name+"/", &valueString)
 	defer emcoctl.CleanUp(valueFilePath)
 	// Apply to EMCO
 	var emptyOptions []string
