@@ -12,7 +12,7 @@ import (
 
 // CAPI Openstack provider url components
 const OPENSTACK_PROVIDER_URL string = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/v0.7.1/infrastructure-components.yaml"
-const DEFAULT_CAPI_CONFIG_PATH string = "config/capi/clusterctl-config.yaml"
+const DEFAULT_CAPI_CONFIG_PATH string = "/.l-kaas/config/capi/capictl.yml"
 
 // Require export KUBECONFIG before running
 var KUBECONFIG string

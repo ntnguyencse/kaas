@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/jinzhu/configor"
 )
 
@@ -50,6 +52,30 @@ func LoadOpenStackCredentials(path string) OpenStackConfiguration {
 		configor.Load(&config, DEFAULT_OPENSTACKCONFIG_PATH)
 	} else {
 		configor.Load(&config, path)
+	}
+	return config
+}
+
+// prerequisitestemplateurl: "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
+// registrationtemplateurl: "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/1stcluster.yaml"
+// instantiatetemplatetrl: "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/instantiate-lc.yaml"
+// prerevaluestemplateurl: "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
+// updatetemplateurl: "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/update-lc.yaml"
+
+type EMCOResourceConfiguration struct {
+	PrerequisiteTemplateUrl       string `required:"true" env:"PREREQUISITETEMPLATEURL"`
+	RegistrationTemplateUrl       string `required:"true" env:"REGISTRATIONTEMPLATEURL"`
+	InstantiateTemplateUrl        string `required:"true" env:"INSTANTIATETEMPLATEURL"`
+	PrerequisiteValuesTemplateUrl string `required:"true" env:"PREREQUISITEVALUESTEMPLATEURL"`
+	UpdateTemplateUrl             string `required:"true" env:"UPDATETEMPLATEURL"`
+}
+
+func LoadEMCOResourceConfiguration(path string) EMCOResourceConfiguration {
+	var config EMCOResourceConfiguration
+
+	er := configor.Load(&config, path)
+	if er != nil {
+		fmt.Println("Error when get config LoadEMCOResourceConfiguration ", er)
 	}
 	return config
 }
