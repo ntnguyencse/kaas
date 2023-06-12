@@ -186,6 +186,12 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 		} else {
 			ownerLCluster.Status.Ready = false
 		}
+		if len(capoStatus.Conditions) > 0 {
+			ownerLCluster.Status.FailureMessage = capoStatus.Conditions[0].Message
+			ownerLCluster.Status.FailureReason = capoStatus.Conditions[0].Reason
+			ownerLCluster.Status.Status = string(capoStatus.Conditions[0].Status)
+
+		}
 		if lenOfLogicalClusterStatus < lenOfLogicalClusterMember {
 			if err != nil {
 				// Add cluster status to Logical Cluster status
@@ -193,15 +199,20 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 				loggerLKP.Info("Print ownerLCluster", "ownerLCluster", ownerLCluster)
 				loggerLKP.Info("Print capoStatus", "capoStatus", capoStatus)
 				ownerLCluster.Status.Phase = intentv1.ConditionType(capoStatus.Phase)
-				if string(ownerLCluster.Status.Phase) != string(capiv1alpha4.ClusterPhaseProvisioned) {
-					if capoStatus.FailureMessage != nil && capoStatus.FailureReason != nil {
-						ownerLCluster.Status.FailureMessage = *capoStatus.FailureMessage
-						ownerLCluster.Status.FailureReason = string(*capoStatus.FailureReason)
-					}
-				} else {
-					ownerLCluster.Status.FailureMessage = ""
-					ownerLCluster.Status.FailureReason = ""
+				// if string(ownerLCluster.Status.Phase) != string(capiv1alpha4.ClusterPhaseProvisioned) {
+				// 	if capoStatus.FailureMessage != nil && capoStatus.FailureReason != nil {
+				// 		ownerLCluster.Status.FailureMessage = *capoStatus.FailureMessage
+				// 		ownerLCluster.Status.FailureReason = string(*capoStatus.FailureReason)
+				// 	}
+				// } else {
+				if len(capoStatus.Conditions) > 0 {
+					ownerLCluster.Status.FailureMessage = capoStatus.Conditions[0].Message
+					ownerLCluster.Status.FailureReason = capoStatus.Conditions[0].Reason
+					ownerLCluster.Status.Status = string(capoStatus.Conditions[0].Status)
+
 				}
+
+				// }
 				// Update status of L-kaas logical cluster
 				memberState := intentv1.ClusterMemberStatus{
 					ClusterName:    ownerLCluster.Name,
@@ -223,7 +234,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 				logicalCluster.Status.ClusterMemberStates[idx].Registration = ownerLCluster.Status.Registration
 			}
 		}
-
+		loggerLKP.Info("Print ownerLCluster STATUS:", "ownerLCluster", ownerLCluster.Status)
 		if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
 			// Register Logical Cluster if at least one cluster turn "Ready" and not yet registration
 			// if len(logicalCluster.Status.ClusterMemberStates) == 1 {
@@ -316,14 +327,14 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 
 		// DO Update the changes to API Server
 		// DO Update status L-KaaS Cluster
-		errUpdate := r.Client.Update(ctx, &ownerLCluster)
+		errUpdate := r.Client.Status().Update(ctx, &ownerLCluster)
 		if errUpdate != nil {
 			loggerLKP.Error(errUpdate, "Error when update LKaaS cluster status")
 			return ctrl.Result{}, errUpdate
 		}
 		// Do Update status L-KaaS Logical Cluster
 		//
-		errUpdate = r.Client.Update(ctx, &logicalCluster)
+		errUpdate = r.Client.Status().Update(ctx, &logicalCluster)
 		if errUpdate != nil {
 			loggerLKP.Error(errUpdate, "Error when update LKaaS logical cluster status")
 			return ctrl.Result{}, errUpdate
