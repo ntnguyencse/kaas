@@ -46,6 +46,7 @@ import (
 	// emcoctl
 	cloudfile "github.com/alexflint/go-cloudfile"
 	emcoctl "github.com/ntnguyencse/L-KaaS/pkg/emcoclient"
+	// kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -705,4 +706,32 @@ func toKubeconfigBytes(out *corev1.Secret) ([]byte, error) {
 // Name returns the name of the secret for a cluster.
 func Name(cluster string, suffix string) string {
 	return fmt.Sprintf("%s-%s", cluster, suffix)
+}
+
+func (r *LogicalClusterControlPlaneProviderReconciler) CalicoInstaller(kubeConfigPath, version string) (*Installer, error) {
+	// Calico Version
+	// https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
+	installer := SetUpInstaller(r.Client)
+	operatorURL := "https://raw.githubusercontent.com/projectcalico/calico/{VERSION}/manifests/tigera-operator.yaml"
+	operatorVersion := version // "v3.26.0"
+	operatorComponent := InstallComponent{
+		Name:           "calico-operator",
+		URL:            operatorURL,
+		Version:        operatorVersion,
+		KubeConfigPath: kubeConfigPath,
+	}
+	calicoUrl := "https://raw.githubusercontent.com/projectcalico/calico/{VERSION}/manifests/custom-resources.yaml"
+	calicoVersion := operatorVersion
+
+	cniComponent := InstallComponent{
+		Name:           "calico-cni",
+		URL:            calicoUrl,
+		Version:        calicoVersion,
+		KubeConfigPath: kubeConfigPath,
+	}
+	installer.AddInstallComponent(operatorComponent)
+	installer.AddInstallComponent(cniComponent)
+	
+	return &installer, nil
+
 }

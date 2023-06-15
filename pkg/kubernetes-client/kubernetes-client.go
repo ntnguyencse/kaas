@@ -59,9 +59,14 @@ func CreateKubernetesClient(kubeConfigPath *string) (ClientSet, error) {
 	}
 	return clientset, err
 }
+
+// Apply resource to API server
+// Requires Kubeconfig and path to file
+// Equalvalent command: kubectl apply -f <filename> --kubeconfig <kubeconfig>
 func ApplyResourceKubernetesWithKubeConfig(kubeConfigPath, yamlFilePath string) error {
 	// kubeConfigPath := "/home/ubuntu/config"
 	// yamlFilePath := "/home/ubuntu/emco-client/test-client/deployment.yaml"
+	// yamlFilePath = https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
 	// Read kubeconfig
 	// kubeConfigBytes, err := os.ReadFile(kubeConfigPath)
 	// if err != nil {
@@ -71,6 +76,8 @@ func ApplyResourceKubernetesWithKubeConfig(kubeConfigPath, yamlFilePath string) 
 	// kubeConfigString := string(kubeConfigBytes)
 	arg := []string{"kubectl", "apply"} // "--kubeconfig", kubeConfigPath}
 	var defaultConfigFlags = genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag().WithDiscoveryBurst(300).WithDiscoveryQPS(50.0)
+	// Important:
+	// Set Kubeconfig for Kubectl command
 	defaultConfigFlags.KubeConfig = &kubeConfigPath
 	kubectlOptions := k8scmd.KubectlOptions{
 		PluginHandler: k8scmd.NewDefaultPluginHandler(k8scmdplugin.ValidPluginFilenamePrefixes),

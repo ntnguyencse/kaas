@@ -19,12 +19,10 @@ package controllers
 import (
 	"fmt"
 	_ "fmt"
-	"io"
 	_ "os"
 	"time"
 
-	cloudfile "github.com/alexflint/go-cloudfile"
-	emcoctl "github.com/ntnguyencse/L-KaaS/pkg/emcoclient"
+	kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -51,38 +49,63 @@ func SetUpInstaller(client client.Client) Installer {
 	installer.Client = client
 	return installer
 }
+func CreateInstallerComponent(Name, Version, URL, TargetNamespace, KubeconfigPath string) InstallComponent {
+	return InstallComponent{
+		Name:            Name,
+		Version:         Version,
+		URL:             URL,
+		TargetNamespace: TargetNamespace,
+		KubeConfigPath:  KubeconfigPath,
+	}
+}
+
 func (i *Installer) AddInstallComponent(item InstallComponent) {
 	i.Components = append(i.Components, item)
 }
-func (i *Installer) Install(clusterName string, options InstallOptions) error {
-	folder := "/tmp/" + clusterName + "/"
+func (i *Installer) Install(clusterName string) error {
+	// folder := "/tmp/" + clusterName + "/"
+	//
 	for _, item := range i.Components {
 		// Download file with URL
-		r, err := cloudfile.Open(item.URL)
-		if err != nil {
-			loggerLKP.Error(err, "Error read file from remote url: "+item.URL)
-			return err
-		}
+		// r, err := cloudfile.Open(item.URL)
+		// if err != nil {
+		// 	loggerLKP.Error(err, "Error read file from remote url: "+item.URL)
+		// 	return err
+		// }
 
-		defer r.Close()
-		strBinary, err := io.ReadAll(r)
-		if err != nil {
-			loggerLKP.Error(err, "Error read file GetTemplateFile io.ReadAll: "+item.URL)
-			return err
-		}
-		result := string(strBinary)
-		componentYamlFilePath, err := emcoctl.SaveValueFile(item.Name+".yaml", folder, &result)
-		if err != nil {
-			fmt.Println(err, "Error when store yaml fiel for install: "+item.URL)
-			return err
-		}
+		// defer r.Close()
+		// strBinary, err := io.ReadAll(r)
+		// if err != nil {
+		// 	loggerLKP.Error(err, "Error read file GetTemplateFile io.ReadAll: "+item.URL)
+		// 	return err
+		// }
+		// result := string(strBinary)
+		// componentYamlFilePath, err := emcoctl.SaveValueFile(item.Name+".yaml", folder, &result)
+		// if err != nil {
+		// 	fmt.Println(err, "Error when store yaml fiel for install: "+item.URL)
+		// 	return err
+		// }
 		//  Install yaml file
+		fmt.Println("Applying Resource....")
+		fmt.Println("Resource Name: ", item.Name, "Resource URL:", item.URL)
+		err := kubernetesclient.ApplyResourceKubernetesWithKubeConfig(item.KubeConfigPath, item.URL)
+		if err != nil {
+			// fmt.Println("Resource Name: ", item.Name, "Resource URL:", item.URL)
+			fmt.Println("Error when apply resources", err)
 
+			return err
+		}
 	}
 	return nil
 }
 
 // Install Calico
-func InstallCalioCNI(installer *Installer) {
-	// Download
+func InstallCalioCNI(installer *Installer, clusterName string, components ...InstallComponent) {
+	// Download Calico Operator
+	// Components for install Calico Operator
+	for _, item := range components {
+		installer.AddInstallComponent(item)
+	}
+	installer.Install(clusterName)
+
 }
