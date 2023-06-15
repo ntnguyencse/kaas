@@ -30,6 +30,7 @@ import (
 	capiulti "sigs.k8s.io/cluster-api/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -78,6 +79,10 @@ func (r *LogicalClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
+	// Add Finalizer
+	if !controllerutil.ContainsFinalizer(logicalCluster, LogicalClusterFinalizer) {
+		controllerutil.AddFinalizer(logicalCluster, LogicalClusterFinalizer)
+	}
 	// CreateValueFileForPrerequisites(logicalCluster)
 
 	// Check each cluster member
@@ -157,6 +162,7 @@ func (r *LogicalClusterReconciler) ReconcileNormal(ctx context.Context, req ctrl
 }
 
 func (r *LogicalClusterReconciler) ReconcileDelete(ctx context.Context, cluster *intentv1.LogicalCluster) (ctrl.Result, error) {
+	controllerutil.RemoveFinalizer(cluster, LogicalClusterFinalizer)
 
 	// TODO(user): your logic here
 	return ctrl.Result{}, nil
