@@ -708,9 +708,17 @@ func Name(cluster string, suffix string) string {
 	return fmt.Sprintf("%s-%s", cluster, suffix)
 }
 
-func (r *LogicalClusterControlPlaneProviderReconciler) CalicoInstaller(kubeConfigPath, version string) (*Installer, error) {
+func (r *LogicalClusterControlPlaneProviderReconciler) CalicoInstaller(kubeConfigPath, version, podCIDR string) (*Installer, error) {
 	// Calico Version
 	// https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
+	// Default Calico version v3.26.0
+	if len(version) < 1 {
+		version = "v3.26.0"
+	}
+	if len(podCIDR) < 1 {
+		podCIDR = "192.168.0.0/16"
+	}
+
 	installer := SetUpInstaller(r.Client)
 	operatorURL := "https://raw.githubusercontent.com/projectcalico/calico/{VERSION}/manifests/tigera-operator.yaml"
 	operatorVersion := version // "v3.26.0"
@@ -731,7 +739,33 @@ func (r *LogicalClusterControlPlaneProviderReconciler) CalicoInstaller(kubeConfi
 	}
 	installer.AddInstallComponent(operatorComponent)
 	installer.AddInstallComponent(cniComponent)
-	
+
 	return &installer, nil
 
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) FlannelInstaller(kubeConfigPath, version, podCIDR string) (*Installer, error) {
+	// Flannel Version
+	// https://raw.githubusercontent.com/flannel-io/flannel/v0.22.0/Documentation/kube-flannel.yml
+	// Default in Flannel: POD_CIDR="10.244.0.0/16"
+	if len(podCIDR) < 4 {
+		podCIDR = "10.244.0.0/16"
+	}
+	if len(version) < 1 {
+		version = "v0.22.0"
+	}
+	installer := SetUpInstaller(r.Client)
+	calicoUrl := "https://raw.githubusercontent.com/flannel-io/flannel/{VERSION}/Documentation/kube-flannel.yml"
+	cniComponent := InstallComponent{
+		Name:           "flannel-cni",
+		URL:            calicoUrl,
+		Version:        version,
+		KubeConfigPath: kubeConfigPath,
+	}
+	installer.AddInstallComponent(cniComponent)
+
+	return &installer, nil
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(context context.Context, request ctrl.Request) error {
+
+	return nil
 }
