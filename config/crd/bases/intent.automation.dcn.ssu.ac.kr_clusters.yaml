@@ -29,15 +29,15 @@ spec:
       name: Ready
       type: string
     - description: Repo
-      jsonPath: .status.repo
+      jsonPath: .status.failureReason
       name: FailureReason
       type: string
     - description: Sync
-      jsonPath: .status.sync
+      jsonPath: .status.failureMessage
       name: FailureMessage
       type: string
     - description: Revision
-      jsonPath: .status.revision
+      jsonPath: .status.sync
       name: Sync
       type: integer
     name: v1

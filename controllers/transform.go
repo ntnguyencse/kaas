@@ -12,7 +12,7 @@ import (
 
 // CAPI Openstack provider url components
 const OPENSTACK_PROVIDER_URL string = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/v0.7.1/infrastructure-components.yaml"
-const DEFAULT_CAPI_CONFIG_PATH string = "config/capi/clusterctl-config.yaml"
+const DEFAULT_CAPI_CONFIG_PATH string = "/.l-kaas/config/capi/capictl.yml"
 
 // Require export KUBECONFIG before running
 var KUBECONFIG string
@@ -183,7 +183,7 @@ func getCredentialsForOpenStackProvider(configPath string) (map[string]string, e
 	}
 
 	providerConfigLoaded := config.LoadOpenStackCredentials(configPath)
-	loggerCL.Info("Print LoadOpenStackCredentials", "Configs", providerConfigLoaded)
+	// loggerCL.Info("Print LoadOpenStackCredentials", "Configs", providerConfigLoaded)
 	secrets := map[string]string{
 		"OPENSTACK_IMAGE_NAME":                   providerConfigLoaded.OpenstackImageName,
 		"OPENSTACK_EXTERNAL_NETWORK_ID":          providerConfigLoaded.OpenstackExternalNetworkId,

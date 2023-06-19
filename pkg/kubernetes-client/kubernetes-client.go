@@ -59,6 +59,66 @@ func CreateKubernetesClient(kubeConfigPath *string) (ClientSet, error) {
 	}
 	return clientset, err
 }
+
+// Apply resource to API server
+// Requires Kubeconfig and path to file
+// Equalvalent command: kubectl apply -f <filename> --kubeconfig <kubeconfig>
+func ApplyResourceKubernetesWithKubeConfig(kubeConfigPath, yamlFilePath string) error {
+	// kubeConfigPath := "/home/ubuntu/config"
+	// yamlFilePath := "/home/ubuntu/emco-client/test-client/deployment.yaml"
+	// yamlFilePath = https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
+	// Read kubeconfig
+	// kubeConfigBytes, err := os.ReadFile(kubeConfigPath)
+	// if err != nil {
+	// 	fmt.Println("Error reading file", err)
+	// 	return
+	// }
+	// kubeConfigString := string(kubeConfigBytes)
+	arg := []string{"kubectl", "apply"} // "--kubeconfig", kubeConfigPath}
+	var defaultConfigFlags = genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag().WithDiscoveryBurst(300).WithDiscoveryQPS(50.0)
+	// Important:
+	// Set Kubeconfig for Kubectl command
+	defaultConfigFlags.KubeConfig = &kubeConfigPath
+	kubectlOptions := k8scmd.KubectlOptions{
+		PluginHandler: k8scmd.NewDefaultPluginHandler(k8scmdplugin.ValidPluginFilenamePrefixes),
+		Arguments:     arg,
+		ConfigFlags:   defaultConfigFlags,
+		IOStreams:     genericclioptions.IOStreams{In: strings.NewReader(""), Out: os.Stdout, ErrOut: os.Stderr},
+	}
+	// k8scmd.NewDefaultKubectlCommandWithArgs(kubectlOptions)
+	cmd := k8scmd.NewKubectlCommand(kubectlOptions)
+	_ = cmd
+	// fmt.Println("Print cmd: ", cmd)
+	kubeConfigFlags := kubectlOptions.ConfigFlags
+	if kubeConfigFlags == nil {
+		kubeConfigFlags = defaultConfigFlags
+	}
+	// kubeConfigFlags.AddFlags(flags)
+	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
+	// matchVersionKubeConfigFlags.AddFlags(flags)
+	// Updates hooks to add kubectl command headers: SIG CLI KEP 859.
+	// addCmdHeaderHooks(cmds, kubeConfigFlags)
+	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
+
+	applyIOStream, _, outbuff, _ := genericclioptions.NewTestIOStreams()
+	applyCmd := apply.NewCmdApply("kubectl", f, applyIOStream)
+	// createCmd := create.NewCmdCreate(f, applyIOStream)
+
+	// createCmd.Flags().Set("filename", yamlFilePath)
+	applyCmd.Flags().Set("filename", yamlFilePath)
+	// Enable Debug Flags in cobra commands
+	applyCmd.DebugFlags()
+	// applyCmd.Run(applyCmd, []string{})
+	// createCmd.Run(createCmd, []string{})
+	applyCmd.Execute()
+	// err := createCmd.Execute()
+	// if err != nil {
+	// 	fmt.Println("error:", err)
+	// }
+
+	fmt.Println("End of function", "out", outbuff)
+	return nil
+}
 func GetPods(clientset *kubernetes.Clientset, namespace string) {
 
 	// crds, err := clientset.RESTClient().Get().Namespace("default").

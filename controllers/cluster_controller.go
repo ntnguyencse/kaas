@@ -46,13 +46,17 @@ type ClusterReconciler struct {
 }
 
 var (
-	loggerCL = ctrl.Log.WithName("Cluster Controller")
+	loggerCL                        = ctrl.Log.WithName("Cluster Controller")
+	CAPIConfigFilePath              string
+	OpenStackProviderConfigFilePath string
 )
 
 const (
-	ClusterFinalizer  string = "cluster.intent.automation.dcn.ssu.ac.kr"
-	NAMESPACE_DEFAULT string = "default"
-	STATUS_GENERATED  string = "Generated"
+	ClusterFinalizer                   string = "cluster.intent.automation.dcn.ssu.ac.kr"
+	NAMESPACE_DEFAULT                  string = "default"
+	STATUS_GENERATED                   string = "Generated"
+	OPENSTACK_DEFAULT_CONFIG_FILE_PATH string = "/.l-kaas/config/openstack/openstack-config.yml"
+	// CAPIDefaultFilePath      string = "/.l-kaas/config/capi/capictl.yml"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -69,6 +73,14 @@ const (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	OpenStackProviderConfigFilePath := os.Getenv("OPENSTACKCONFIGFILEPATH")
+	if len(OpenStackProviderConfigFilePath) < 1 {
+		OpenStackProviderConfigFilePath = OPENSTACK_DEFAULT_CONFIG_FILE_PATH
+	}
+	CAPIConfigFilePath := os.Getenv("CAPICONFIGFILEPATH")
+	if len(CAPIConfigFilePath) < 1 {
+		CAPIConfigFilePath = DEFAULT_CAPI_CONFIG_PATH
+	}
 	// Load Configuration
 	// configuration := config.LoadConfig(config.DEFAULT_CONFIG_PATH)
 
@@ -353,7 +365,7 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, clusterNameS
 	// Get Provider COnfig
 	OpenStackProviderConfig := GetConfigForOpenStack()
 	// Get Credentials of Provider
-	configs, err := getCredentialsForOpenStackProvider("/home/ubuntu/l-kaas/L-KaaS/config/capi/capictl.yml")
+	configs, err := getCredentialsForOpenStackProvider(CAPIConfigFilePath)
 	if err != nil {
 		loggerCL.Error(err, "getCredentialsForOpenStackProvider")
 	}

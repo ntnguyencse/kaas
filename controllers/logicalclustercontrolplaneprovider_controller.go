@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -45,6 +46,7 @@ import (
 	// emcoctl
 	cloudfile "github.com/alexflint/go-cloudfile"
 	emcoctl "github.com/ntnguyencse/L-KaaS/pkg/emcoclient"
+	// kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -63,16 +65,13 @@ const (
 	TLSKeyDataName = "tls.key"
 
 	// TLSCrtDataName is the key used to store a TLS certificate in the secret's data field.
-	TLSCrtDataName                        = "tls.crt"
-	KubeConfigSecretSuffix                = "kubeconfig"
-	EMCOApplyFlag                         = "apply"
-	EMCODeleteFlag                        = "delete"
-	EMCOConfigPath                        = "/home/ubuntu/l-kaas/L-KaaS/pkg/emcoclient/.emco.yaml"
-	prerequisitesTemplateUrl              = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
-	registrationLogicalClusterTemplateUrl = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/1stcluster.yaml"
-	instantiateLogicalClusterTemplateUrl  = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/instantiate-lc.yaml"
-	prerequisitesValuesTemplateUrl        = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
-	UpdateLogicalClusterTemplateUrl       = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/update-lc.yaml"
+	TLSCrtDataName                         = "tls.crt"
+	KubeConfigSecretSuffix                 = "kubeconfig"
+	EMCOApplyFlag                          = "apply"
+	EMCODeleteFlag                         = "delete"
+	EMCOConfigPath                         = "/home/ubuntu/l-kaas/L-KaaS/pkg/emcoclient/.emco.yaml"
+	EMCO_DEFAULT_CONFIG_FILE_PATH          = "/.l-kaas/config/emco/.emco.yaml"
+	EMCO_RESOURCE_DEFAULT_CONFIG_FILE_PATH = "/.l-kaas/config/emco/emco-resource.yml"
 )
 
 const timeoutRetryCreateLogicalCluster = 10 * time.Minute
@@ -84,6 +83,13 @@ var (
 	instantiateFilePath                   = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
 	addClusterToLogicalClusterFilePath    = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
 	updateClusterToLogicalClusterFilePath = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
+	EMCOConfigFilePath                    string
+	EMCOResourceConfigFilePath            string
+	prerequisitesTemplateUrl              = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
+	registrationLogicalClusterTemplateUrl = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/1stcluster.yaml"
+	instantiateLogicalClusterTemplateUrl  = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/instantiate-lc.yaml"
+	prerequisitesValuesTemplateUrl        = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
+	UpdateLogicalClusterTemplateUrl       = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/update-lc.yaml"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclustercontrolplaneproviders,verbs=get;list;watch;create;update;patch;delete
@@ -100,6 +106,22 @@ var (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	EMCOConfigFilePath := os.Getenv("OPENSTACKCONFIGFILEPATH")
+	if len(EMCOConfigFilePath) < 1 {
+		EMCOConfigFilePath = EMCO_DEFAULT_CONFIG_FILE_PATH
+	}
+	loggerLKP.Info("Print EMCOConfigFilePath", "Value", EMCOConfigFilePath)
+	EMCOResourceConfigFilePath := os.Getenv("EMCORESOURCEFILEPATH")
+	if len(EMCOResourceConfigFilePath) < 1 {
+		EMCOResourceConfigFilePath = EMCO_RESOURCE_DEFAULT_CONFIG_FILE_PATH
+	}
+	// EMCOResourceConfig := config.LoadEMCOResourceConfiguration(EMCOResourceConfigFilePath)
+	// loggerLKP.Info("Print EMCOResourceConfig", "Value", EMCOResourceConfig)
+	// prerequisitesTemplateUrl = EMCOResourceConfig.PrerequisiteTemplateUrl
+	// registrationLogicalClusterTemplateUrl = EMCOResourceConfig.RegistrationTemplateUrl
+	// instantiateLogicalClusterTemplateUrl = EMCOResourceConfig.InstantiateTemplateUrl
+	// prerequisitesValuesTemplateUrl = EMCOResourceConfig.PrerequisiteValuesTemplateUrl
+	// UpdateLogicalClusterTemplateUrl = EMCOResourceConfig.UpdateTemplateUrl
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
@@ -121,184 +143,203 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 	CAPOStatus := CAPOClusters.DeepCopy().Status
 	// Print CAPO Status
 	loggerLKP.Info("Print CAPO STATUS", "CAPO:", CAPOStatus)
-	// Get Logical Cluister form OwnerRef of CAPO Cluster
-	ownerRef := CAPOClusters.ObjectMeta.OwnerReferences[0]
-	loggerLKP.Info("Print OwnerReferences", "OwnerReferences:", CAPOClusters.ObjectMeta.OwnerReferences)
-	ownerLCluster, err := r.GetClusterOwnerObject(ctx, req, &ownerRef)
-	if err != nil {
-		loggerLKP.Error(err, "Error when get cluster owner's object")
-		return ctrl.Result{}, nil
-	}
-	// Print Owner's CAPO Cluster
-	loggerLKP.Info("Print Owner's CAPO cluster", "Owner", ownerLCluster.Name)
-	// Get Logical Cluster Owner CAPO Cluster
-	RefOfLogicalCluster := ownerLCluster.ObjectMeta.OwnerReferences[0]
-	logicalCluster, err := r.GetLogicalClusterOwnerObject(ctx, req, &RefOfLogicalCluster)
-	if err != nil {
-		loggerLKP.Error(err, "Error when get cluster owner's object")
-		return ctrl.Result{}, nil
-	}
-	// Print Owner's CAPO Cluster
-	loggerLKP.Info("Print Owner's CAPO cluster", "Owner", logicalCluster.Name)
 
-	//
-	// ------ CHECK STATUS OF CAPO CLUSTER------------------//
-	//
-	// If Ready status of logical cluster and at least have one status member
-	//
-	// Base on Capo Cluster Status, Register logical cluster to EMCO
-	// Compare Cluster Member status with Each Member Cluster Status
-	//
-	lClusterMembersStatus := logicalCluster.Status.ClusterMemberStates
-	// Find the record of current Cluster inside status:
-	idx, _, err := FindMemberStatusCorresspondToClusterName(&lClusterMembersStatus, CAPOClusters.Name)
-	// TODO: How to check status of current CLuster
-	lenOfLogicalClusterStatus := len(lClusterMembersStatus)
-	lenOfLogicalClusterMember := len(logicalCluster.Spec.Clusters)
-	capoStatus := CAPOClusters.Status
-	if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
-		ownerLCluster.Status.Ready = true
-
-	} else {
-		ownerLCluster.Status.Ready = false
-	}
-	if lenOfLogicalClusterStatus < lenOfLogicalClusterMember {
+	// If cluster does not contain any ref, it's not belong to any logical cluster
+	if len(CAPOClusters.ObjectMeta.OwnerReferences) > 0 {
+		// Get Logical Cluister form OwnerRef of CAPO Cluster
+		ownerRef := CAPOClusters.ObjectMeta.OwnerReferences[0]
+		loggerLKP.Info("Print OwnerReferences", "OwnerReferences:", CAPOClusters.ObjectMeta.OwnerReferences)
+		ownerLCluster, err := r.GetClusterOwnerObject(ctx, req, &ownerRef)
 		if err != nil {
-			// Add cluster status to Logical Cluster status
-			// Update status of cluster
-			loggerLKP.Info("Print ownerLCluster", "ownerLCluster", ownerLCluster)
-			loggerLKP.Info("Print capoStatus", "capoStatus", capoStatus)
-			ownerLCluster.Status.Phase = intentv1.ConditionType(capoStatus.Phase)
-			if string(ownerLCluster.Status.Phase) != string(capiv1alpha4.ClusterPhaseProvisioned) {
-				ownerLCluster.Status.FailureMessage = *capoStatus.FailureMessage
-				ownerLCluster.Status.FailureReason = string(*capoStatus.FailureReason)
-			} else {
-				ownerLCluster.Status.FailureMessage = ""
-				ownerLCluster.Status.FailureReason = ""
-			}
-			// Update status of L-kaas logical cluster
-			memberState := intentv1.ClusterMemberStatus{
-				ClusterName:    ownerLCluster.Name,
-				Ready:          ownerLCluster.Status.Ready,
-				FailureMessage: ownerLCluster.Status.FailureMessage,
-				FailureReason:  ownerLCluster.Status.FailureReason,
-				// Registration:   ownerLCluster.Status.Registration,
-			}
-
-			logicalCluster.Status.ClusterMemberStates = append(logicalCluster.Status.ClusterMemberStates, memberState)
+			loggerLKP.Error(err, "Error when get cluster owner's object")
+			return ctrl.Result{}, nil
 		}
-
-	} else {
-		// Update Logical Cluster status
-		if err != nil && idx != -1 {
-			logicalCluster.Status.ClusterMemberStates[idx].Ready = ownerLCluster.Status.Ready
-			logicalCluster.Status.ClusterMemberStates[idx].FailureMessage = ownerLCluster.Status.FailureMessage
-			logicalCluster.Status.ClusterMemberStates[idx].FailureReason = ownerLCluster.Status.FailureReason
-			logicalCluster.Status.ClusterMemberStates[idx].Registration = ownerLCluster.Status.Registration
+		// Print Owner's CAPO Cluster
+		loggerLKP.Info("Print Owner's CAPO cluster", "Owner", ownerLCluster.Name)
+		// Get Logical Cluster Owner CAPO Cluster
+		RefOfLogicalCluster := ownerLCluster.ObjectMeta.OwnerReferences[0]
+		logicalCluster, err := r.GetLogicalClusterOwnerObject(ctx, req, &RefOfLogicalCluster)
+		if err != nil {
+			loggerLKP.Error(err, "Error when get cluster owner's object")
+			return ctrl.Result{}, nil
 		}
-	}
+		// Print Owner's CAPO Cluster
+		loggerLKP.Info("Print Owner's CAPO cluster", "Owner", logicalCluster.Name)
 
-	// Register Logical Cluster if at least one cluster turn "Ready" and not yet registration
-	// if len(logicalCluster.Status.ClusterMemberStates) == 1 {
-	// if !logicalCluster.Status.ClusterMemberStates[0].Registration {
-	// var err error
-	// TODO Create EMCO Cluster Provider
-	folderCAPOCluster := "/tmp/" + logicalCluster.Name
-	// TODO Get kubeconfig of Cluster
-	// Get KubeCOnfig
-	kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
-	if err != nil {
-		loggerLKP.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
-	}
-	kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".yaml"), folderCAPOCluster, &kubeconfig)
-	prereString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
-	// TODO Add Cluster to EMCO Logical CLuster
-	prereValueFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &prereString)
-	prereTemplateFileContent, err := GetTemplateFile(prerequisitesTemplateUrl)
-	if err != nil {
-		loggerLKP.Error(err, "Error when get Prerequisite Template file")
-	}
-	prereTemplateFilePath, err := emcoctl.SaveValueFile("prequisitesTemplate.yaml", folderCAPOCluster, &prereTemplateFileContent)
-	//
-	// TODO Create Logical Cluster in EMCO
-	//
-	PrerequisitesLogicalCluster(EMCOApplyFlag, EMCOConfigPath, prereTemplateFilePath, prereValueFilePath)
-	//
-	// TODO Add Cluster to Logical CLuster
-	//
-	AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
-	if err != nil {
-		loggerLKP.Error(err, "Error when get Add Cluster Template file")
-	}
-	AddClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
-	AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigPath, AddClusterTemplateFilePath, prereValueFilePath)
-	//
-	// TODO: Instantiate Logical Cluster
-	//
-	InstantiateLogicalClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
-	if err != nil {
-		loggerLKP.Error(err, "Error when get Instantiate Template file")
-	}
-	InstantiateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("InstantiateLogicalClusterTemplate.yaml", folderCAPOCluster, &InstantiateLogicalClusterTemplateFileContent)
-	// emcoctl --config emco-cfg.yaml apply -f instantiate-lc.yaml -v values.yaml
-	InstansiateLogicalCluster(EMCOApplyFlag, EMCOConfigPath, InstantiateLogicalClusterTemplateFilePath, prereValueFilePath)
-	// }
-	// } else {
-	// var err error
-	// // TODO Create EMCO Cluster Provider
-	// folderCAPOCluster := "/tmp/" + logicalCluster.Name
-	// // TODO Get kubeconfig of Cluster
-	// // Get KubeCOnfig
-	// kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
-	// if err != nil {
-	// 	loggerLKP.Error(err, "Error when get Kubeconfig (add cluster to logical cluster): "+CAPOClusters.Name)
-	// }
-	// kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".yaml"), folderCAPOCluster, &kubeconfig)
-	// // Create values file for Apply to EMCO server
-	// valueFileContentString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
-	// ValuesFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &valueFileContentString)
-	// AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
-	// if err != nil {
-	// 	loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster)")
-	// }
-	AddClusterTemplateFilePath, err = emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
-	// emcoctl --config emco-cfg.yaml apply -f 2ndcluster.yaml -v values.yaml
-	AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigPath, AddClusterTemplateFilePath, prereValueFilePath)
+		//
+		// ------ CHECK STATUS OF CAPO CLUSTER------------------//
+		//
+		// If Ready status of logical cluster and at least have one status member
+		//
+		// Base on Capo Cluster Status, Register logical cluster to EMCO
+		// Compare Cluster Member status with Each Member Cluster Status
+		//
+		lClusterMembersStatus := logicalCluster.Status.ClusterMemberStates
+		// Find the record of current Cluster inside status:
+		idx, _, err := FindMemberStatusCorresspondToClusterName(&lClusterMembersStatus, CAPOClusters.Name)
+		// TODO: How to check status of current CLuster
+		lenOfLogicalClusterStatus := len(lClusterMembersStatus)
+		lenOfLogicalClusterMember := len(logicalCluster.Spec.Clusters)
+		capoStatus := CAPOClusters.Status
+		if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
+			ownerLCluster.Status.Ready = true
 
-	// TODO: Update Logical Cluster
-	UpdateLogicalClusterTemplateFileContent, err := GetTemplateFile(UpdateLogicalClusterTemplateUrl)
-	if err != nil {
-		loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster)")
-	}
-	UpdateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &UpdateLogicalClusterTemplateFileContent)
-	// TODO: Update Logical Cluster
-	// emcoctl --config emco-cfg.yaml apply -f update-lc.yaml -v values.yaml
-	UpdateLogicalCluster(EMCOApplyFlag, EMCOConfigPath, UpdateLogicalClusterTemplateFilePath, prereValueFilePath)
-	// }
+		} else {
+			ownerLCluster.Status.Ready = false
+		}
+		if len(capoStatus.Conditions) > 0 {
+			ownerLCluster.Status.FailureMessage = capoStatus.Conditions[0].Message
+			ownerLCluster.Status.FailureReason = capoStatus.Conditions[0].Reason
+			ownerLCluster.Status.Status = string(capoStatus.Conditions[0].Status)
 
-	// Find status of cluster and check if registration is false
-	// Only self add cluster to logical cluster
-	// if len(logicalCluster.Status.ClusterMemberStates) > 1 {
+		}
+		if lenOfLogicalClusterStatus < lenOfLogicalClusterMember {
+			if err != nil {
+				// Add cluster status to Logical Cluster status
+				// Update status of cluster
+				loggerLKP.Info("Print ownerLCluster", "ownerLCluster", ownerLCluster)
+				loggerLKP.Info("Print capoStatus", "capoStatus", capoStatus)
+				ownerLCluster.Status.Phase = intentv1.ConditionType(capoStatus.Phase)
+				// if string(ownerLCluster.Status.Phase) != string(capiv1alpha4.ClusterPhaseProvisioned) {
+				// 	if capoStatus.FailureMessage != nil && capoStatus.FailureReason != nil {
+				// 		ownerLCluster.Status.FailureMessage = *capoStatus.FailureMessage
+				// 		ownerLCluster.Status.FailureReason = string(*capoStatus.FailureReason)
+				// 	}
+				// } else {
+				if len(capoStatus.Conditions) > 0 {
+					ownerLCluster.Status.FailureMessage = capoStatus.Conditions[0].Message
+					ownerLCluster.Status.FailureReason = capoStatus.Conditions[0].Reason
+					ownerLCluster.Status.Status = string(capoStatus.Conditions[0].Status)
 
-	// }
+				}
 
-	//------CACULATE THE STATUS OF LOGICAL CLUSTER----------//
-	// Separate status object:
-	// CAPOPhaseStatus := CAPOStatus.Phase
+				// }
+				// Update status of L-kaas logical cluster
+				memberState := intentv1.ClusterMemberStatus{
+					ClusterName:    ownerLCluster.Name,
+					Ready:          ownerLCluster.Status.Ready,
+					FailureMessage: ownerLCluster.Status.FailureMessage,
+					FailureReason:  ownerLCluster.Status.FailureReason,
+					// Registration:   ownerLCluster.Status.Registration,
+				}
 
-	// DO Update the changes to API Server
-	// DO Update status L-KaaS Cluster
-	errUpdate := r.Client.Update(ctx, &ownerLCluster)
-	if errUpdate != nil {
-		loggerLKP.Error(errUpdate, "Error when update LKaaS cluster status")
-		return ctrl.Result{}, errUpdate
-	}
-	// Do Update status L-KaaS Logical Cluster
-	//
-	errUpdate = r.Client.Update(ctx, &logicalCluster)
-	if errUpdate != nil {
-		loggerLKP.Error(errUpdate, "Error when update LKaaS logical cluster status")
-		return ctrl.Result{}, errUpdate
+				logicalCluster.Status.ClusterMemberStates = append(logicalCluster.Status.ClusterMemberStates, memberState)
+			}
+
+		} else {
+			// Update Logical Cluster status
+			if err != nil && idx != -1 {
+				logicalCluster.Status.ClusterMemberStates[idx].Ready = ownerLCluster.Status.Ready
+				logicalCluster.Status.ClusterMemberStates[idx].FailureMessage = ownerLCluster.Status.FailureMessage
+				logicalCluster.Status.ClusterMemberStates[idx].FailureReason = ownerLCluster.Status.FailureReason
+				logicalCluster.Status.ClusterMemberStates[idx].Registration = ownerLCluster.Status.Registration
+			}
+		}
+		loggerLKP.Info("Print ownerLCluster STATUS:", "ownerLCluster", ownerLCluster.Status)
+		if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
+			// Register Logical Cluster if at least one cluster turn "Ready" and not yet registration
+			// if len(logicalCluster.Status.ClusterMemberStates) == 1 {
+			// if !logicalCluster.Status.ClusterMemberStates[0].Registration {
+			// var err error
+			// TODO Create EMCO Cluster Provider
+			folderCAPOCluster := "/tmp/" + logicalCluster.Name + "/"
+			// TODO Get kubeconfig of Cluster
+			// Get KubeCOnfig
+			kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
+			if err != nil {
+				loggerLKP.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
+			}
+			kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
+			prereString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
+			// TODO Add Cluster to EMCO Logical CLuster
+			prereValueFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &prereString)
+			prereTemplateFileContent, err := GetTemplateFile(prerequisitesTemplateUrl)
+			if err != nil {
+				loggerLKP.Error(err, "Error when get Prerequisite Template file: "+prerequisitesTemplateUrl)
+			}
+			prereTemplateFilePath, err := emcoctl.SaveValueFile("prequisitesTemplate.yaml", folderCAPOCluster, &prereTemplateFileContent)
+			//
+			// TODO Create Logical Cluster in EMCO
+			//
+			PrerequisitesLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, prereTemplateFilePath, prereValueFilePath)
+			//
+			// TODO Add Cluster to Logical CLuster
+			//
+			AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
+			if err != nil {
+				loggerLKP.Error(err, "Error when get Add Cluster Template file: "+registrationLogicalClusterTemplateUrl)
+			}
+			AddClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
+			AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, AddClusterTemplateFilePath, prereValueFilePath)
+			//
+			// TODO: Instantiate Logical Cluster
+			//
+			InstantiateLogicalClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
+			if err != nil {
+				loggerLKP.Error(err, "Error when get Instantiate Template file: "+registrationLogicalClusterTemplateUrl)
+			}
+			InstantiateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("InstantiateLogicalClusterTemplate.yaml", folderCAPOCluster, &InstantiateLogicalClusterTemplateFileContent)
+			// emcoctl --config emco-cfg.yaml apply -f instantiate-lc.yaml -v values.yaml
+			InstansiateLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, InstantiateLogicalClusterTemplateFilePath, prereValueFilePath)
+			// }
+			// } else {
+			// var err error
+			// // TODO Create EMCO Cluster Provider
+			// folderCAPOCluster := "/tmp/" + logicalCluster.Name
+			// // TODO Get kubeconfig of Cluster
+			// // Get KubeCOnfig
+			// kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
+			// if err != nil {
+			// 	loggerLKP.Error(err, "Error when get Kubeconfig (add cluster to logical cluster): "+CAPOClusters.Name)
+			// }
+			// kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".yaml"), folderCAPOCluster, &kubeconfig)
+			// // Create values file for Apply to EMCO server
+			// valueFileContentString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
+			// ValuesFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &valueFileContentString)
+			// AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
+			// if err != nil {
+			// 	loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster)")
+			// }
+			AddClusterTemplateFilePath, err = emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
+			// emcoctl --config emco-cfg.yaml apply -f 2ndcluster.yaml -v values.yaml
+			AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, AddClusterTemplateFilePath, prereValueFilePath)
+
+			// TODO: Update Logical Cluster
+			UpdateLogicalClusterTemplateFileContent, err := GetTemplateFile(UpdateLogicalClusterTemplateUrl)
+			if err != nil {
+				loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster): "+UpdateLogicalClusterTemplateUrl)
+			}
+			UpdateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &UpdateLogicalClusterTemplateFileContent)
+			// TODO: Update Logical Cluster
+			// emcoctl --config emco-cfg.yaml apply -f update-lc.yaml -v values.yaml
+			UpdateLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, UpdateLogicalClusterTemplateFilePath, prereValueFilePath)
+		}
+		// }
+
+		// Find status of cluster and check if registration is false
+		// Only self add cluster to logical cluster
+		// if len(logicalCluster.Status.ClusterMemberStates) > 1 {
+
+		// }
+
+		//------CACULATE THE STATUS OF LOGICAL CLUSTER----------//
+		// Separate status object:
+		// CAPOPhaseStatus := CAPOStatus.Phase
+
+		// DO Update the changes to API Server
+		// DO Update status L-KaaS Cluster
+		errUpdate := r.Client.Status().Update(ctx, &ownerLCluster)
+		if errUpdate != nil {
+			loggerLKP.Error(errUpdate, "Error when update LKaaS cluster status")
+			return ctrl.Result{}, errUpdate
+		}
+		// Do Update status L-KaaS Logical Cluster
+		//
+		errUpdate = r.Client.Status().Update(ctx, &logicalCluster)
+		if errUpdate != nil {
+			loggerLKP.Error(errUpdate, "Error when update LKaaS logical cluster status")
+			return ctrl.Result{}, errUpdate
+		}
 	}
 	return ctrl.Result{}, nil
 }
@@ -498,7 +539,7 @@ func CreateLogicalClusterPrerequisitesValueContent(lCluster *intentv1.LogicalClu
 	}
 	valuestemplateString, err := GetTemplateFile(prerequisitesValuesTemplateUrl)
 	if err != nil {
-		loggerLKP.Error(err, "Error wwhen get remote file github")
+		loggerLKP.Error(err, "Error wwhen get remote file github"+prerequisitesValuesTemplateUrl)
 		return "", err
 	}
 	outputStr, err := emcoctl.InterpolateValueFile(&valuestemplateString, valuesMap)
@@ -561,7 +602,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) InstantiateLogicalCluster
 	if err != nil {
 		loggerLKP.Error(err, "Error when interpolate Value File")
 	}
-	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+logicalCluster.Name+"-instantiate/", &valueString)
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+logicalCluster.Name+"/", &valueString)
 	defer emcoctl.CleanUp(valueFilePath)
 	// Apply to EMCO
 	var emptyOptions []string
@@ -582,7 +623,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) AddClusterToLogicalCluste
 	if err != nil {
 		loggerLKP.Error(err, "Error when interpolate Value File")
 	}
-	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+cluster.Name+"-addcluster/", &valueString)
+	valueFilePath, err := emcoctl.SaveValueFile("values.yaml", "/tmp/"+cluster.Name+"/", &valueString)
 	defer emcoctl.CleanUp(valueFilePath)
 	// Apply to EMCO
 	var emptyOptions []string
@@ -665,4 +706,66 @@ func toKubeconfigBytes(out *corev1.Secret) ([]byte, error) {
 // Name returns the name of the secret for a cluster.
 func Name(cluster string, suffix string) string {
 	return fmt.Sprintf("%s-%s", cluster, suffix)
+}
+
+func (r *LogicalClusterControlPlaneProviderReconciler) CalicoInstaller(kubeConfigPath, version, podCIDR string) (*Installer, error) {
+	// Calico Version
+	// https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
+	// Default Calico version v3.26.0
+	if len(version) < 1 {
+		version = "v3.26.0"
+	}
+	if len(podCIDR) < 1 {
+		podCIDR = "192.168.0.0/16"
+	}
+
+	installer := SetUpInstaller(r.Client)
+	operatorURL := "https://raw.githubusercontent.com/projectcalico/calico/{VERSION}/manifests/tigera-operator.yaml"
+	operatorVersion := version // "v3.26.0"
+	operatorComponent := InstallComponent{
+		Name:           "calico-operator",
+		URL:            operatorURL,
+		Version:        operatorVersion,
+		KubeConfigPath: kubeConfigPath,
+	}
+	calicoUrl := "https://raw.githubusercontent.com/projectcalico/calico/{VERSION}/manifests/custom-resources.yaml"
+	calicoVersion := operatorVersion
+
+	cniComponent := InstallComponent{
+		Name:           "calico-cni",
+		URL:            calicoUrl,
+		Version:        calicoVersion,
+		KubeConfigPath: kubeConfigPath,
+	}
+	installer.AddInstallComponent(operatorComponent)
+	installer.AddInstallComponent(cniComponent)
+
+	return &installer, nil
+
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) FlannelInstaller(kubeConfigPath, version, podCIDR string) (*Installer, error) {
+	// Flannel Version
+	// https://raw.githubusercontent.com/flannel-io/flannel/v0.22.0/Documentation/kube-flannel.yml
+	// Default in Flannel: POD_CIDR="10.244.0.0/16"
+	if len(podCIDR) < 4 {
+		podCIDR = "10.244.0.0/16"
+	}
+	if len(version) < 1 {
+		version = "v0.22.0"
+	}
+	installer := SetUpInstaller(r.Client)
+	calicoUrl := "https://raw.githubusercontent.com/flannel-io/flannel/{VERSION}/Documentation/kube-flannel.yml"
+	cniComponent := InstallComponent{
+		Name:           "flannel-cni",
+		URL:            calicoUrl,
+		Version:        version,
+		KubeConfigPath: kubeConfigPath,
+	}
+	installer.AddInstallComponent(cniComponent)
+
+	return &installer, nil
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(context context.Context, request ctrl.Request) error {
+
+	return nil
 }

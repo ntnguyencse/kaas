@@ -48,6 +48,11 @@ func SaveYamlStringToFile(fileName string, folder string, yamlContent *string) (
 		folder, _ = os.Getwd()
 	}
 	filePath := folder + "/" + fileName
+	// Remove file before open
+	e := os.Remove(filePath)
+	if e != nil {
+		fmt.Println(e, "Error when remove file", filePath)
+	}
 	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	defer file.Close()
 	if err != nil {
