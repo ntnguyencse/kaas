@@ -100,10 +100,11 @@ type ClusterStatus struct {
 // +kubebuilder:pruning:PreserveUnknownFields
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Cluster"
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status",description="Cluster status"
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.sha",description="SHA"
-// +kubebuilder:printcolumn:name="FailureReason",type="string",JSONPath=".status.failureReason",description="Repo"
-// +kubebuilder:printcolumn:name="FailureMessage",type="string",JSONPath=".status.failureMessage",description="Sync"
-// +kubebuilder:printcolumn:name="Sync",type="integer",JSONPath=".status.sync",description="Revision"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Ready"
+// +kubebuilder:printcolumn:name="FailureReason",type="string",JSONPath=".status.failureReason",description="failureReason"
+// +kubebuilder:printcolumn:name="FailureMessage",type="string",JSONPath=".status.failureMessage",description="failureMessage"
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="Phase"
+
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`

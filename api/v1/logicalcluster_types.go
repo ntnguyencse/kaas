@@ -73,6 +73,8 @@ type LogicalClusterStatus struct {
 
 	// Ready state of Logical cluster
 	Ready bool `json:"ready,omitempty"`
+	// Status of cluster
+	Status string `json:"status,omitempty"`
 	// State of Each Cluster Member
 	ClusterMemberStates []ClusterMemberStatus `json:"clusterMemberStates,omitempty"`
 	// Failure Message
@@ -94,8 +96,16 @@ type LogicalClusterStatus struct {
 	Registration bool `json:"registration,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:pruning:PreserveUnknownFields
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Cluster"
+// +kubebuilder:printcolumn:name="InfrastructureReady",type="string",JSONPath=".status.infrastructureReady",description="infrastructureReady"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Ready"
+// +kubebuilder:printcolumn:name="FailureReason",type="string",JSONPath=".status.failureReason",description="failureReason"
+// +kubebuilder:printcolumn:name="FailureMessage",type="string",JSONPath=".status.failureMessage",description="failureMessage"
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="Phase"
+// +kubebuilder:printcolumn:name="Registration",type="string",JSONPath=".status.registration",description="Registration"
 
 // LogicalCluster is the Schema for the logicalclusters API
 type LogicalCluster struct {

@@ -15,7 +15,36 @@ spec:
     singular: logicalcluster
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: Time duration since creation of Cluster
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: infrastructureReady
+      jsonPath: .status.infrastructureReady
+      name: InfrastructureReady
+      type: string
+    - description: Ready
+      jsonPath: .status.ready
+      name: Ready
+      type: string
+    - description: failureReason
+      jsonPath: .status.failureReason
+      name: FailureReason
+      type: string
+    - description: failureMessage
+      jsonPath: .status.failureMessage
+      name: FailureMessage
+      type: string
+    - description: Phase
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: Registration
+      jsonPath: .status.registration
+      name: Registration
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: LogicalCluster is the Schema for the logicalclusters API
@@ -287,8 +316,12 @@ spec:
               registration:
                 description: Registration Status of Logical Cluster
                 type: boolean
+              status:
+                description: Status of cluster
+                type: string
             type: object
         type: object
+        x-kubernetes-preserve-unknown-fields: true
     served: true
     storage: true
     subresources:
