@@ -1,0 +1,195 @@
+apiVersion: v1
+data:
+  cacert: Cg==
+  clouds.yaml: 
+kind: Secret
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: test1-cloud-config
+  namespace: default
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: test1-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      files:
+      - content: ==
+        encoding: base64
+        owner: root
+        path: /etc/kubernetes/cloud.conf
+        permissions: "0600"
+      - content: Cg==
+        encoding: base64
+        owner: root
+        path: /etc/certs/cacert
+        permissions: "0600"
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            cloud-config: /etc/kubernetes/cloud.conf
+            cloud-provider: openstack
+          name: '{{ local_hostname }}'
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: test1
+  namespace: default
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 10.244.0.0/16
+    serviceDomain: cluster.local
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: test1-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
+    kind: OpenStackCluster
+    name: test1
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: test1-md-0
+  namespace: default
+spec:
+  clusterName: test1
+  replicas: 1
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: test1-md-0
+      clusterName: test1
+      failureDomain: compute3
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
+        kind: OpenStackMachineTemplate
+        name: test1-md-0
+      version: v1.24.8
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: test1-control-plane
+  namespace: default
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer:
+        extraArgs:
+          cloud-config: /etc/kubernetes/cloud.conf
+          cloud-provider: openstack
+        extraVolumes:
+        - hostPath: /etc/kubernetes/cloud.conf
+          mountPath: /etc/kubernetes/cloud.conf
+          name: cloud
+          readOnly: true
+        timeoutForControlPlane: 10m0s
+      controllerManager:
+        extraArgs:
+          cloud-config: /etc/kubernetes/cloud.conf
+          cloud-provider: openstack
+        extraVolumes:
+        - hostPath: /etc/kubernetes/cloud.conf
+          mountPath: /etc/kubernetes/cloud.conf
+          name: cloud
+          readOnly: true
+        - hostPath: /etc/certs/cacert
+          mountPath: /etc/certs/cacert
+          name: cacerts
+          readOnly: true
+    files:
+    - content: ==
+      encoding: base64
+      owner: root
+      path: /etc/kubernetes/cloud.conf
+      permissions: "0600"
+    - content: Cg==
+      encoding: base64
+      owner: root
+      path: /etc/certs/cacert
+      permissions: "0600"
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-config: /etc/kubernetes/cloud.conf
+          cloud-provider: openstack
+        name: '{{ local_hostname }}'
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-config: /etc/kubernetes/cloud.conf
+          cloud-provider: openstack
+        name: '{{ local_hostname }}'
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
+      kind: OpenStackMachineTemplate
+      name: test1-control-plane
+  replicas: 1
+  version: v1.24.8
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
+kind: OpenStackCluster
+metadata:
+  name: test1
+  namespace: default
+spec:
+  apiServerLoadBalancer:
+    enabled: true
+  cloudName: devstack
+  network:
+    id: 25018a02-b33f-4c05-85f8-7e9c07f4e6b7
+  dnsNameservers:
+  - 8.8.8.8
+  externalNetworkId: 147a0c31-89e4-412a-859d-7f3cec25bb6f
+  identityRef:
+    kind: Secret
+    name: test1-cloud-config
+  managedSecurityGroups: true
+  allowAllInClusterTraffic: true
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
+kind: OpenStackMachineTemplate
+metadata:
+  name: test1-control-plane
+  namespace: default
+spec:
+  template:
+    spec:
+      cloudName: devstack
+      flavor: m1.medium
+      identityRef:
+        kind: Secret
+        name: test1-cloud-config
+      image: ubuntu-k8s-1.24
+      sshKeyName: capi-test
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
+kind: OpenStackMachineTemplate
+metadata:
+  name: test1-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      cloudName: devstack
+      flavor: cluster.compute.small
+      identityRef:
+        kind: Secret
+        name: test1-cloud-config
+      image: ubuntu-k8s-1.24
+      sshKeyName: capi-test
