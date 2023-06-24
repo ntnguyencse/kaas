@@ -1,0 +1,24 @@
+  orchestrator:
+    host: 192.168.40.218
+    port: 30415
+    statusPort: 30416
+  clm:
+    host: 192.168.40.218
+    port: 30461
+  ncm:
+    host: 192.168.40.218
+    port: 30481
+    statusPort: 30482
+  ovnaction:
+    host: 192.168.40.218
+    port: 30451
+  dcm:
+    host: 192.168.40.218
+    port: 30477
+    statusPort: 30478
+  gac:
+    host: 192.168.40.218
+    port: 30420
+  dtc:
+   host: 192.168.40.218
+   port: 30418

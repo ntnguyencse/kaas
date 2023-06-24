@@ -15,28 +15,28 @@ spec:
           automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
       spec:
         clustercatalog: openstack-medium-catalog
-    - cluster:
-      name: edge1-cluster
-      metadata:
-        labels:
-          automation.dcn.ssu.ac.kr/location: edge-datacenter1
-          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
-      spec:
-        clustercatalog: openstack-medium-catalog
-    - cluster:
-      name: edge2-cluster
-      metadata:
-        labels:
-          automation.dcn.ssu.ac.kr/location: edge-datacenter2
-          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
-      spec:
-        clustercatalog: openstack-medium-catalog
-    - cluster:
-      name: edge3-cluster
-      metadata:
-        labels:
-          automation.dcn.ssu.ac.kr/location: edge-datacenter3
-          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
-      spec:
-        clustercatalog: openstack-medium-catalog
+    # - cluster:
+    #   name: edge1-cluster
+    #   metadata:
+    #     labels:
+    #       automation.dcn.ssu.ac.kr/location: edge-datacenter1
+    #       automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+    #   spec:
+    #     clustercatalog: openstack-medium-catalog
+    # - cluster:
+    #   name: edge2-cluster
+    #   metadata:
+    #     labels:
+    #       automation.dcn.ssu.ac.kr/location: edge-datacenter2
+    #       automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+    #   spec:
+    #     clustercatalog: openstack-medium-catalog
+    # - cluster:
+    #   name: edge3-cluster
+    #   metadata:
+    #     labels:
+    #       automation.dcn.ssu.ac.kr/location: edge-datacenter3
+    #       automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+    #   spec:
+    #     clustercatalog: openstack-medium-catalog
 

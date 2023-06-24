@@ -1,0 +1,118 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2020 Intel Corporation
+
+---
+#Add label cluster
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider}}/clusters/{{.Cluster1}}/labels
+clusterLabel: LabelA
+
+---
+version: emco/v2
+resourceContext:
+  anchor: cluster-providers/{{.ClusterProvider}}/clusters/{{.Cluster1}}/apply 
+
+---
+#creating vfw composite app entry
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps
+metadata :
+  name: compositevfw
+spec:
+  compositeAppVersion: v1
+
+---
+#adding packetgen app to the composite app
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/apps
+metadata :
+  name: packetgen
+file:
+  {{.HelmAppPacketgen}}
+
+#creating vfw composite profile entry
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/composite-profiles
+metadata :
+  name: vfw_composite-profile
+
+---
+#adding packetgen app profiles to the composite profile
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/composite-profiles/vfw_composite-profile/profiles
+metadata :
+  name: packetgen-profile
+spec:
+  app: packetgen
+file:
+  {{.ProfileFw}}
+
+---
+#create deployment intent group
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/deployment-intent-groups
+metadata :
+  name: vfw_deployment_intent_group
+spec:
+  compositeProfile: vfw_composite-profile
+  version: r1
+  logicalCloud: {{.AdminCloud}}
+  overrideValues:
+  - app: packetgen
+    values:
+      "service.ports.nodePort": '30888'
+  - app: firewall
+    values:
+      "global.dcaeCollectorIp": 1.2.3.4
+      "global.dcaeCollectorPort": '8888'
+  - app: sink
+    values:
+      "service.ports.nodePort": '30677'
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/deployment-intent-groups/vfw_deployment_intent_group/intents
+metadata :
+  name: fw-deployment-intent
+spec:
+  intent:
+    genericPlacementIntent: fw-placement-intent
+    ovnaction: vfw_ovnaction_intent
+
+---
+#create the generic placement intent
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/deployment-intent-groups/vfw_deployment_intent_group/generic-placement-intents
+metadata :
+  name: fw-placement-intent
+
+---
+#add the packetgen app placement intent to the generic placement intent
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/deployment-intent-groups/vfw_deployment_intent_group/generic-placement-intents/fw-placement-intent/app-intents
+metadata:
+  name: packetgen-placement-intent
+spec:
+  app: packetgen
+  intent:
+    allOf:
+    - clusterProvider: {{.ClusterProvider}}
+      clusterLabel: LabelA
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/deployment-intent-groups/vfw_deployment_intent_group/approve
+
+---
+version: emco/v2
+resourceContext:
+  anchor: projects/{{.ProjectName}}/composite-apps/compositevfw/v1/deployment-intent-groups/vfw_deployment_intent_group/instantiate
