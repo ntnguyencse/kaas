@@ -21,6 +21,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"strings"
 
 	// jsonclassic "encoding/json"
 
@@ -61,6 +62,7 @@ const (
 	// CAPIDefaultFilePath      string = "/.l-kaas/config/capi/capictl.yml"
 	CNIFlannelType string = "flannel"
 	CNICalicoType  string = "calico"
+	TEMP_PATH      string = "/home/ubuntu/l-kaas/L-KaaS/test"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -120,8 +122,14 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.ReconcileDelete(ctx, &cluster)
 	}
 	clusterStatus := cluster.Status
+	loggerCL.Info("Print clusterStatus:", "clusterStatus", clusterStatus)
 	if clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.Registration {
-		r.ReconcileInstallSoftware(ctx, req, &cluster)
+		// loggerCL.Info("Install software")
+		// r.ReconcileInstallSoftware(ctx, req, &cluster)
+		// //Update status Registration
+		// cluster.Status.Registration = true
+		// r.Client.Status().Update(ctx, &cluster)
+		// loggerCL.Info("Installed software")
 	}
 	return r.ReconcileNormal(ctx, &cluster)
 }
@@ -338,11 +346,13 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // 		r.Client.Update(ctx, &deploy)
 // 		return ctrl.Result{}, nil
 */
+
+// Reconcile Normal
 func (r *ClusterReconciler) ReconcileNormal(ctx context.Context, cluster *intentv1.Cluster) (ctrl.Result, error) {
 	// TODO:
 	// Reconcile Normal
 	loggerCL.Info("Print Cluster: ", cluster.Name, cluster)
-	r.GetOrCreateCluster(ctx, "default", cluster)
+	r.GetOrCreateCluster(ctx, cluster.Namespace, cluster)
 	// Do not forget defer func (){}()
 	return ctrl.Result{}, nil
 }
@@ -390,7 +400,7 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, clusterNameS
 	configs = AddToConfigs(configs, ownerRefs)
 
 	clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
-
+	loggerCL.Info("Print CAPI Resources:", clusterDescriptiton.Name, clusterStr)
 	r.ApplyCAPIResourceToKubernertes(clusterDescriptiton.Name, clusterStr)
 	return clusterDescriptiton, err
 }
@@ -415,7 +425,11 @@ func AddInfraConfigsFromClusterDescription(clusterDes *intentv1.ClusterDescripti
 	configs["CAPI_TEMPLATE_URL"] = infraDes.Spec["url"] + infraDes.Spec["filename"]
 	// Take the first Network record
 	networkDes := clusterDes.Spec.Network[0]
-	configs["POD_CIDR"] = networkDes.Spec["podCIDR"]
+	podCIDRValue := networkDes.Spec["podCIDR"]
+	podCIDRValue = strings.ReplaceAll(podCIDRValue, "[", "")
+	podCIDRValue = strings.ReplaceAll(podCIDRValue, "]", "")
+
+	configs["POD_CIDR"] = podCIDRValue
 	configs["CNI_NAME"] = networkDes.Spec["cni"]
 	configs["SERVICE_CIDR"] = networkDes.Spec["serviceCIDR"]
 	return configs
@@ -428,13 +442,24 @@ func (r *ClusterReconciler) ApplyCAPIResourceToKubernertes(clusterName, CAPIRes 
 	// 	loggerCL.Error(err, "Error convert CAPI Resources")
 	// 	return err
 	// }
-	filepath, err := ultis.SaveYamlStringToFile(clusterName+".yaml", "/home/ubuntu/l-kaas/L-KaaS/test", &CAPIRes)
+	filepath, err := ultis.SaveYamlStringToFile(clusterName+".yaml", TEMP_PATH, &CAPIRes)
 	if err != nil {
 		loggerCL.Error(err, "Err Save file")
 		return err
 	}
 	defer CleanUpCAPIResource(filepath)
-	kubernetesclient.KubectlApplyYamlFile(filepath)
+	var capi capiv1alpha4.Cluster
+	// Check the exist of CAPI cluster
+	err = r.Get(context.Background(), client.ObjectKey{Name: clusterName}, &capi)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Apply the Capi Resource
+			kubernetesclient.KubectlApplyYamlFile(filepath)
+		} else {
+			loggerCL.Error(err, "Error when apply CAPI Resource kubernetesclient.KubectlApplyYamlFile()")
+		}
+	}
+
 	// for i, capi := range listCAPIRes {
 	// 	loggerCL.Info("CAPIRes:", "String: ", string(capi))
 	// 	content := string(capi)
@@ -538,6 +563,9 @@ func (r *ClusterReconciler) FlannelInstaller(kubeConfigPath, version, podCIDR st
 	// Default in Flannel: POD_CIDR="10.244.0.0/16"
 	if len(podCIDR) < 4 {
 		podCIDR = "10.244.0.0/16"
+	} else {
+		podCIDR = strings.ReplaceAll(podCIDR, "[", "")
+		podCIDR = strings.ReplaceAll(podCIDR, "]", "")
 	}
 	if len(version) < 1 {
 		version = "v0.22.0"
