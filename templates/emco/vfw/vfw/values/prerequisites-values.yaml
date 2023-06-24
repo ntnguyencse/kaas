@@ -1,0 +1,17 @@
+
+ProjectName: ${PROJECTNAME}
+ClusterProvider: ${CLUSTERPROVIDER}
+Cluster1: ${CLUSTERNAME}
+Cluster1Ref: ${CLUSTERREF}
+LogicalCloud: ${LOGICALCLOUD}
+StandardNamespace: ${STANDARDNAMESPACE}
+StandardPermission: standard-permission 
+RsyncPort: 30431 
+GacPort: 30433
+OvnPort: 30432
+DtcPort: 30448
+NpsPort: 30438
+HostIP: ${HOSTIP}
+Clusters:
+  - Name: ${CLUSTERMEMBERNAME}
+    KubeConfig: ${KUBE_PATH}
