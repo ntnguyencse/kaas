@@ -8,8 +8,6 @@ spec:
       spec: 
         name: openstack-small-cluster
         type: ClusterTemplate
-      override:
-        kubernetesVersion: v1.25.0
   network:
     - name: flannel-default
       spec: 
