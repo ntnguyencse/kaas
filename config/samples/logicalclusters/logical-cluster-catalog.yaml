@@ -1,10 +1,10 @@
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: LogicalCluster
 metadata:
-  name: mec-cluster
+  name: logical-cluster
   labels:
-    automation.dcn.ssu.ac.kr/project: dcn
-    tenant: starlab
+    automation.dcn.ssu.ac.kr/project: project-name
+    tenant: tenant-name
 spec:
   clusters:
     - cluster:
@@ -15,14 +15,14 @@ spec:
           automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
       spec:
         clustercatalog: openstack-medium-catalog
-    # - cluster:
-    #   name: edge1-cluster
-    #   metadata:
-    #     labels:
-    #       automation.dcn.ssu.ac.kr/location: edge-datacenter1
-    #       automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
-    #   spec:
-    #     clustercatalog: openstack-medium-catalog
+    - cluster:
+      name: edge1-cluster
+      metadata:
+        labels:
+          automation.dcn.ssu.ac.kr/location: edge-datacenter1
+          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+      spec:
+        clustercatalog: openstack-medium-catalog
     # - cluster:
     #   name: edge2-cluster
     #   metadata:
