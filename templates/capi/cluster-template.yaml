@@ -123,6 +123,7 @@ spec:
           mountPath: /etc/kubernetes/cloud.conf
           name: cloud
           readOnly: true
+        timeoutForControlPlane: 10m0s
       controllerManager:
         extraArgs:
           cloud-config: /etc/kubernetes/cloud.conf
