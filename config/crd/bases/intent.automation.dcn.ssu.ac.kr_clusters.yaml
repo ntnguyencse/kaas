@@ -24,22 +24,22 @@ spec:
       jsonPath: .status.status
       name: Status
       type: string
-    - description: SHA
-      jsonPath: .status.sha
+    - description: Ready
+      jsonPath: .status.ready
       name: Ready
       type: string
-    - description: Repo
+    - description: failureReason
       jsonPath: .status.failureReason
       name: FailureReason
       type: string
-    - description: Sync
+    - description: failureMessage
       jsonPath: .status.failureMessage
       name: FailureMessage
       type: string
-    - description: Revision
-      jsonPath: .status.sync
-      name: Sync
-      type: integer
+    - description: Phase
+      jsonPath: .status.phase
+      name: Phase
+      type: string
     name: v1
     schema:
       openAPIV3Schema:

@@ -17,6 +17,6 @@ spec:
   values:
     kubernetesVersion: v1.24.8
     controlPlaneMachineCount: "1"
-    workerMachineCount: "3"
+    workerMachineCount: "1"
     controlplaneFlavor: m1.medium
     workerFlavor: m1.large

@@ -183,9 +183,11 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 		capoStatus := CAPOClusters.Status
 		if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
 			ownerLCluster.Status.Ready = true
+			ownerLCluster.Status.Phase = intentv1.ConditionType(capoStatus.Phase)
 
 		} else {
 			ownerLCluster.Status.Ready = false
+			ownerLCluster.Status.Phase = intentv1.ConditionType(capoStatus.Phase)
 		}
 		if len(capoStatus.Conditions) > 0 {
 			ownerLCluster.Status.FailureMessage = capoStatus.Conditions[0].Message
@@ -313,6 +315,10 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 			// TODO: Update Logical Cluster
 			// emcoctl --config emco-cfg.yaml apply -f update-lc.yaml -v values.yaml
 			UpdateLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, UpdateLogicalClusterTemplateFilePath, prereValueFilePath)
+			// Clean UP
+			// defer emcoctl.CleanUp(kubePath)
+			// defer emcoctl.CleanUp(AddClusterTemplateFilePath)
+			// defer emcoctl.CleanUp(InstantiateLogicalClusterTemplateFileContent)
 		}
 		// }
 

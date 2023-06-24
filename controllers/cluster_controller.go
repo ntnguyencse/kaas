@@ -30,9 +30,11 @@ import (
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
 	kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
 	"github.com/ntnguyencse/L-KaaS/pkg/ultis"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	capiv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -57,6 +59,8 @@ const (
 	STATUS_GENERATED                   string = "Generated"
 	OPENSTACK_DEFAULT_CONFIG_FILE_PATH string = "/.l-kaas/config/openstack/openstack-config.yml"
 	// CAPIDefaultFilePath      string = "/.l-kaas/config/capi/capictl.yml"
+	CNIFlannelType string = "flannel"
+	CNICalicoType  string = "calico"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -115,7 +119,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if !cluster.ObjectMeta.DeletionTimestamp.IsZero() {
 		return r.ReconcileDelete(ctx, &cluster)
 	}
-
+	clusterStatus := cluster.Status
+	if clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.Registration {
+		r.ReconcileInstallSoftware(ctx, req, &cluster)
+	}
 	return r.ReconcileNormal(ctx, &cluster)
 }
 
@@ -473,4 +480,148 @@ func SplitYAML(resources []byte) ([][]byte, error) {
 }
 func ChooseKindCAPIResource(resource string) {
 
+}
+func (r *ClusterReconciler) getKubeConfigCluster(ctx context.Context, clusterName, nameSpace string) (string, error) {
+	secret := &corev1.Secret{}
+	secretKey := client.ObjectKey{
+		Namespace: nameSpace,
+		Name:      Name(clusterName, KubeConfigSecretSuffix),
+	}
+	if err := r.Get(ctx, secretKey, secret); err != nil {
+		return "nil", err
+	}
+	secretBytes, err := toKubeconfigBytes(secret)
+	return string(secretBytes), err
+}
+
+// Install Calico CNI
+func (r *ClusterReconciler) CalicoInstaller(kubeConfigPath, version, podCIDR string) (*Installer, error) {
+	// Calico Version
+	// https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
+	// Default Calico version v3.26.0
+	if len(version) < 1 {
+		version = "v3.26.0"
+	}
+	if len(podCIDR) < 1 {
+		podCIDR = "192.168.0.0/16"
+	}
+
+	installer := SetUpInstaller(r.Client)
+	operatorURL := "https://raw.githubusercontent.com/projectcalico/calico/{VERSION}/manifests/tigera-operator.yaml"
+	operatorVersion := version // "v3.26.0"
+	operatorComponent := InstallComponent{
+		Name:           "calico-operator",
+		URL:            operatorURL,
+		Version:        operatorVersion,
+		KubeConfigPath: kubeConfigPath,
+	}
+	calicoUrl := "https://raw.githubusercontent.com/projectcalico/calico/{VERSION}/manifests/custom-resources.yaml"
+	calicoVersion := operatorVersion
+
+	cniComponent := InstallComponent{
+		Name:           "calico-cni",
+		URL:            calicoUrl,
+		Version:        calicoVersion,
+		KubeConfigPath: kubeConfigPath,
+	}
+	installer.AddInstallComponent(operatorComponent)
+	installer.AddInstallComponent(cniComponent)
+
+	return &installer, nil
+
+}
+
+// Install Flannel CNI
+func (r *ClusterReconciler) FlannelInstaller(kubeConfigPath, version, podCIDR string) (*Installer, error) {
+	// Flannel Version
+	// https://raw.githubusercontent.com/flannel-io/flannel/v0.22.0/Documentation/kube-flannel.yml
+	// Default in Flannel: POD_CIDR="10.244.0.0/16"
+	if len(podCIDR) < 4 {
+		podCIDR = "10.244.0.0/16"
+	}
+	if len(version) < 1 {
+		version = "v0.22.0"
+	}
+	installer := SetUpInstaller(r.Client)
+	calicoUrl := "https://raw.githubusercontent.com/flannel-io/flannel/{VERSION}/Documentation/kube-flannel.yml"
+	cniComponent := InstallComponent{
+		Name:           "flannel-cni",
+		URL:            calicoUrl,
+		Version:        version,
+		KubeConfigPath: kubeConfigPath,
+	}
+	installer.AddInstallComponent(cniComponent)
+
+	return &installer, nil
+}
+
+// Reconcile when cluster provisioned and setting up software components
+func (r *ClusterReconciler) ReconcileInstallSoftware(ctx context.Context, request ctrl.Request, cluster *intentv1.Cluster) error {
+
+	// Get CApi CLUSTER
+	var CAPICluster capiv1alpha4.Cluster
+	err := r.Get(ctx, client.ObjectKey{
+		Namespace: request.Namespace,
+		Name:      cluster.Name,
+	}, &CAPICluster)
+	if err != nil {
+		loggerCL.Error(err, "Error when get CAPI Cluster, ReconcileInstallSoftware")
+		return err
+	}
+
+	networkConfig := cluster.Spec.Network
+	// Get Blueprint of Network
+	var networkProfile intentv1.Profile
+	err = r.Get(ctx, client.ObjectKey{
+		Namespace: request.Namespace,
+		Name:      networkConfig[0].Name,
+	}, &networkProfile)
+	if err != nil {
+		loggerCL.Error(err, "Error when get Network Profile , ReconcileInstallSoftware")
+		return err
+	}
+	podCIDR := CAPICluster.Spec.ClusterNetwork.Pods.CIDRBlocks[0]
+
+	// Install CNI
+	// Currently support 2 CNI: Flannel, Calico
+	// Cilium is not support install over crds
+	CNIType := networkProfile.Spec.Values["cni"]
+	CNIVersion := networkProfile.Spec.Values["version"]
+	if CNIType == CNIFlannelType {
+		// Get kubeconfig
+		kubeconfig, err := r.getKubeConfigCluster(ctx, CAPICluster.Name, CAPICluster.Namespace)
+		if err != nil {
+			loggerCL.Error(err, "Error when get Kubeconfig", "CNICalicoType", CNICalicoType, "Cluster Name: ", CAPICluster.Name)
+			return err
+		}
+		folder := "/tmp/" + CAPICluster.Name + "kube"
+		fileName := CAPICluster.Name + "-" + KubeConfigSecretSuffix
+		pathKubeconfig, err := ultis.SaveYamlStringToFile(fileName, folder, &kubeconfig)
+		if err != nil {
+			loggerCL.Error(err, "Error when get Kubeconfig", "CNICalicoType", CNICalicoType, "Cluster Name: ", CAPICluster.Name)
+			return err
+		}
+		defer CleanUpCAPIResource(pathKubeconfig)
+
+		r.FlannelInstaller(pathKubeconfig, CNIVersion, podCIDR)
+	} else if CNIType == CNICalicoType {
+		// Get kubeconfig
+		kubeconfig, err := r.getKubeConfigCluster(ctx, CAPICluster.Name, CAPICluster.Namespace)
+		if err != nil {
+			loggerCL.Error(err, "Error when get Kubeconfig", "CNICalicoType", CNICalicoType, "Cluster Name: ", CAPICluster.Name)
+			return err
+		}
+		folder := "/tmp/" + CAPICluster.Name + "kube"
+		fileName := CAPICluster.Name + "-" + KubeConfigSecretSuffix
+		pathKubeconfig, err := ultis.SaveYamlStringToFile(fileName, folder, &kubeconfig)
+		if err != nil {
+			loggerCL.Error(err, "Error when get Kubeconfig", "CNICalicoType", CNICalicoType, "Cluster Name: ", CAPICluster.Name)
+			return err
+		}
+		defer CleanUpCAPIResource(pathKubeconfig)
+
+		installer, _ := r.CalicoInstaller(pathKubeconfig, CNIVersion, podCIDR)
+		installer.Install(CAPICluster.Name)
+	}
+	return nil
 }

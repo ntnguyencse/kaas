@@ -1,0 +1,3 @@
+resetfile: "https://raw.githubusercontent.com/ntnguyencse/kubeadm_installation/main/script/reset.sh"
+masterfile: "https://raw.githubusercontent.com/ntnguyencse/kubeadm_installation/main/script/master-fix-google-gpg.sh"
+workerfile: "https://raw.githubusercontent.com/ntnguyencse/kubeadm_installation/main/script/worker.sh"

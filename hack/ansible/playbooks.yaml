@@ -1,0 +1,54 @@
+---
+- name: Ping master
+  hosts: masters
+  tasks:
+   - name: Ping master
+     ansible.builtin.ping:
+- name: Ping worker
+  hosts: workers
+  tasks:
+   - name: Print worker
+     ansible.builtin.ping:
+- name: Install master node
+  hosts: masters
+  vars_files:
+  - variables.yml
+  tasks:
+    - name: Create Folder
+      file:
+        path: ~/install-k8s
+        state: directory
+    - name: Download file master
+      ansible.builtin.get_url:
+      url: {{ masterfile }}
+      dest: ~/install-k8s/master.sh
+      mode: '700'
+    - name: Download file reset
+      ansible.builtin.get_url:
+      url: {{ resetfile }}
+      dest: ~/install-k8s/reset.sh
+      mode: '700'
+   - name: Run k8s install script
+      ansible.builtin.script:  ~/install-k8s/master.sh
+  - name: Generate join token
+    ansible.builtin.command: kubeadm token create --print-join-command
+    register: k8s-join-command 
+
+- name: Install workers node
+  hosts: workers
+  vars_files:
+  - variables.yml
+  tasks:
+    - name: Create Folder
+      file:
+        path: ~/install-k8s
+        state: directory
+    - name: Download file worker
+      ansible.builtin.get_url:
+      url: {{ workerfile }}
+      dest: ~/install-k8s/worker.sh
+      mode: '700'
+   - name: Run k8s install script
+      ansible.builtin.script:  ~/install-k8s/worker.sh
+  - name: Join node to cluster
+    ansible.builtin.command: k8s-join-command

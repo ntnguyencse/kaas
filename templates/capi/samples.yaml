@@ -1,39 +1,29 @@
 apiVersion: v1
 data:
-  cacert: ${OPENSTACK_CLOUD_CACERT_B64}
-  clouds.yaml: ${OPENSTACK_CLOUD_YAML_B64}
+  cacert: Cg==
+  clouds.yaml: 
 kind: Secret
 metadata:
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
-  name: ${CLUSTER_NAME}-cloud-config
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1-cloud-config
+  namespace: default
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: ${CLUSTER_NAME}-md-0
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1-md-0
+  namespace: default
 spec:
   template:
     spec:
       files:
-      - content: ${OPENSTACK_CLOUD_PROVIDER_CONF_B64}
+      - content: ==
         encoding: base64
         owner: root
         path: /etc/kubernetes/cloud.conf
         permissions: "0600"
-      - content: ${OPENSTACK_CLOUD_CACERT_B64}
+      - content: Cg==
         encoding: base64
         owner: root
         path: /etc/certs/cacert
@@ -48,42 +38,31 @@ spec:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: ${CLUSTER_NAME}
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1
+  namespace: default
 spec:
   clusterNetwork:
     pods:
       cidrBlocks:
-      - ${POD_CIDR}
-      # - 192.168.0.0/16
+      - 10.244.0.0/16
     serviceDomain: cluster.local
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: ${CLUSTER_NAME}-control-plane
+    name: test1-control-plane
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
     kind: OpenStackCluster
-    name: ${CLUSTER_NAME}
+    name: test1
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: ${CLUSTER_NAME}-md-0
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1-md-0
+  namespace: default
 spec:
-  clusterName: ${CLUSTER_NAME}
-  replicas: ${WORKER_MACHINE_COUNT}
+  clusterName: test1
+  replicas: 1
   selector:
     matchLabels: null
   template:
@@ -92,25 +71,20 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: ${CLUSTER_NAME}-md-0
-      clusterName: ${CLUSTER_NAME}
-      failureDomain: ${OPENSTACK_FAILURE_DOMAIN}
+          name: test1-md-0
+      clusterName: test1
+      failureDomain: compute3
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
         kind: OpenStackMachineTemplate
-        name: ${CLUSTER_NAME}-md-0
-      version: ${KUBERNETES_VERSION}
+        name: test1-md-0
+      version: v1.24.8
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: ${CLUSTER_NAME}-control-plane
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1-control-plane
+  namespace: default
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
@@ -138,12 +112,12 @@ spec:
           name: cacerts
           readOnly: true
     files:
-    - content: ${OPENSTACK_CLOUD_PROVIDER_CONF_B64}
+    - content: ==
       encoding: base64
       owner: root
       path: /etc/kubernetes/cloud.conf
       permissions: "0600"
-    - content: ${OPENSTACK_CLOUD_CACERT_B64}
+    - content: Cg==
       encoding: base64
       owner: root
       path: /etc/certs/cacert
@@ -164,71 +138,58 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
       kind: OpenStackMachineTemplate
-      name: ${CLUSTER_NAME}-control-plane
-  replicas: ${CONTROL_PLANE_MACHINE_COUNT}
-  version: ${KUBERNETES_VERSION}
+      name: test1-control-plane
+  replicas: 1
+  version: v1.24.8
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
 kind: OpenStackCluster
 metadata:
-  name: ${CLUSTER_NAME}
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1
+  namespace: default
 spec:
   apiServerLoadBalancer:
     enabled: true
-  cloudName: ${OPENSTACK_CLOUD}
+  cloudName: devstack
+  network:
+    id: 25018a02-b33f-4c05-85f8-7e9c07f4e6b7
   dnsNameservers:
-  - ${OPENSTACK_DNS_NAMESERVERS}
-  externalNetworkId: ${OPENSTACK_EXTERNAL_NETWORK_ID}
+  - 8.8.8.8
+  externalNetworkId: 147a0c31-89e4-412a-859d-7f3cec25bb6f
   identityRef:
     kind: Secret
-    name: ${CLUSTER_NAME}-cloud-config
+    name: test1-cloud-config
   managedSecurityGroups: true
-  nodeCidr: 10.6.0.0/24
+  allowAllInClusterTraffic: true
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
 kind: OpenStackMachineTemplate
 metadata:
-  name: ${CLUSTER_NAME}-control-plane
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1-control-plane
+  namespace: default
 spec:
   template:
     spec:
-      cloudName: ${OPENSTACK_CLOUD}
-      flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
+      cloudName: devstack
+      flavor: m1.medium
       identityRef:
         kind: Secret
-        name: ${CLUSTER_NAME}-cloud-config
-      image: ${OPENSTACK_IMAGE_NAME}
-      sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+        name: test1-cloud-config
+      image: ubuntu-k8s-1.24
+      sshKeyName: capi-test
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha6
 kind: OpenStackMachineTemplate
 metadata:
-  name: ${CLUSTER_NAME}-md-0
-  ownerReferences:
-    - apiVersion: ${CLUSTER_OWNER_API_VERSION}
-      kind: ${CLUSTER_OWNER_KIND}
-      name: ${CLUSTER_OWNER_NAME}
-      uid: ${CLUSTER_OWNER_UID}
-      blockOwnerDeletion: true
+  name: test1-md-0
+  namespace: default
 spec:
   template:
     spec:
-      cloudName: ${OPENSTACK_CLOUD}
-      flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
+      cloudName: devstack
+      flavor: cluster.compute.small
       identityRef:
         kind: Secret
-        name: ${CLUSTER_NAME}-cloud-config
-      image: ${OPENSTACK_IMAGE_NAME}
-      sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+        name: test1-cloud-config
+      image: ubuntu-k8s-1.24
+      sshKeyName: capi-test

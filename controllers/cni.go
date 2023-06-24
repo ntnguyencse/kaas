@@ -91,7 +91,7 @@ func (i *Installer) Install(clusterName string) error {
 		err := kubernetesclient.ApplyResourceKubernetesWithKubeConfig(item.KubeConfigPath, item.URL)
 		if err != nil {
 			// fmt.Println("Resource Name: ", item.Name, "Resource URL:", item.URL)
-			fmt.Println("Error when apply resources", err)
+			fmt.Println("Error when apply resources", err, "Cluster Name:", clusterName)
 
 			return err
 		}

@@ -11,5 +11,5 @@ spec:
   values:
     cni: flannel
     version: "0.20.0"
-    podCIDR: "[10.96.0.0/12]"
-    serviceCIDR: "[192.168.0.0/16]"
+    podCIDR: "[10.244.0.0/16]"
+    serviceCIDR: "[10.243.0.0/16]"

@@ -1,0 +1,1 @@
+kubectl patch configmap/mymap --type json  --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]'
