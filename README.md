@@ -1,8 +1,23 @@
-# kubernetes-as-a-service
-// TODO(user): Add simple overview of use/purpose
+# Logical Kubernetes as a Service
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+* L-KaaS is a project focused on providing declarative APIs and tooling to simplify, abstract, be easy to use for users who don’t have deep technical knowledge of infrastructure and shield them from low-level concepts and technologies.
+
+
+## Goals of L-KaaS
+
+* Powerful abstraction implemented on top of existing project Cluster API
+
+* Provide a simple, automatic, and easy-to-manage lifecycle of multi-Kubernetes clusters using declarative methods.
+
+* Based on GitOps supports, taking advantage of git for management from Day 0 through Day 2.
+
+* Reuse and integrate existing ecosystems (Cluster API,..) rather than duplicating their functionality.
+
+* Simplifying and uniform automation all the way to onboarding, the complexity of provisioning and managing a multi-provider, multi-site deployment of underlying cloud infrastructure or distributed cloud, getting rid of all complex configurations
+
+## Documentation
+This is a very early development; right now it is just a starter page with links to other resources. In time we develop comprehensive documentation.
+For concepts, glossary, designs, see [Docs](/docs)
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
@@ -12,37 +27,29 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 1. Install Instances of Custom Resources:
 
 ```sh
-kubectl apply -f config/samples/
+kubectl apply -f config/crd/bases/
+kubectl apply -f config/samples/profiles/
+kubectl apply -f config/samples/clustercatalogs/
 ```
-
-2. Build and push your image to the location specified by `IMG`:
+2. Install Cluster API Controllers
+```sh
+./hack/capi-install.sh
+```
+3. Run Controllers
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/kubernetes-as-a-service:tag
+make run
 ```
-
-3. Deploy the controller to the cluster with the image specified by `IMG`:
-
+4. Create Logical Cluster
 ```sh
-make deploy IMG=<some-registry>/kubernetes-as-a-service:tag
+kubectl apply -f config/samples/intent_v1_logicalcluster.yaml
 ```
-
 ### Uninstall CRDs
 To delete the CRDs from the cluster:
 
 ```sh
 make uninstall
 ```
-
-### Undeploy controller
-UnDeploy the controller from the cluster:
-
-```sh
-make undeploy
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
 
 ### How it works
 This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
