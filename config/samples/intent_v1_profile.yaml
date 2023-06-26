@@ -50,7 +50,7 @@ spec:
     controlPlaneMachineCount: "1"
     controlplaneFlavor: m1.medium
     kubernetesVersion: v1.24.8
-    workerFlavor: m1.large
+    workerFlavor: m1.medium
     workerMachineCount: "3"
 ---
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
