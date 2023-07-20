@@ -48,7 +48,7 @@ import (
 	emcoctl "github.com/ntnguyencse/L-KaaS/pkg/emcoclient"
 
 	// kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
-	grabfile "github.com/cavaliercoder/grab"
+	grabfile "github.com/cavaliergopher/grab/v3"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -334,7 +334,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 				if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
 					loggerLKP.Info("Start installing software")
 					// Install CNI
-					r.ReconcileInstallSoftware(ctx, req, ownerLCluster, CAPOClusters)
+					r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
 
 				}
 
@@ -805,14 +805,17 @@ func (r *LogicalClusterControlPlaneProviderReconciler) FlannelEMCOInstaller(kube
 	flannelUrl := "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/cni/flannel/flannel.tar.gz"
 	// Download kubeflannel file
 	resp, err := grabfile.Get("/tmp/emco-tmp/", flannelUrl)
-
+	if err != nil {
+		loggerLKP.Error(err, "Error get Flannel helm chart: FlannelEMCOInstallerFunc")
+	}
+	_ = resp
 	return nil
 }
-func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(context context.Context, request ctrl.Request, kubePath string, cluster *intentv1.Cluster, CAPICluster *capiv1alpha4.Cluster, Profiles []intentv1.Profile) error {
+func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(context context.Context, request ctrl.Request, kubePath string, cluster *intentv1.Cluster, CAPICluster *capiv1alpha4.Cluster) error {
 	// clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.RegistrationkubePath
 	// Install CNI
 	loggerLKP.Info("Begin Install Flannel")
-	flannelInstaller, _ := r.FlannelInstaller(kubePath, "v0.2.0", CAPICluster.ClusterNetwork.Pods.CIDRBlocks[0])
+	flannelInstaller, _ := r.FlannelInstaller(kubePath, "v0.2.0", CAPICluster.Spec.ClusterNetwork.Pods.CIDRBlocks[0])
 	flannelInstaller.Install(CAPICluster.Name)
 	loggerLKP.Info("Finish install Flannel")
 
