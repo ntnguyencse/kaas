@@ -46,7 +46,9 @@ import (
 	// emcoctl
 	cloudfile "github.com/alexflint/go-cloudfile"
 	emcoctl "github.com/ntnguyencse/L-KaaS/pkg/emcoclient"
+
 	// kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
+	grabfile "github.com/cavaliergopher/grab/v3"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -83,6 +85,8 @@ var (
 	instantiateFilePath                   = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
 	addClusterToLogicalClusterFilePath    = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
 	updateClusterToLogicalClusterFilePath = "/home/ubuntu/l-kaas/L-KaaS/templates/emco/dcm/prerequisites.yaml"
+	// For Register Logical Cloud
+	// Prerequisite Value => Prerequisite LC => Instatiate LC => Update LC
 	EMCOConfigFilePath                    string
 	EMCOResourceConfigFilePath            string
 	prerequisitesTemplateUrl              = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/prerequisites.yaml"
@@ -90,6 +94,10 @@ var (
 	instantiateLogicalClusterTemplateUrl  = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/instantiate-lc.yaml"
 	prerequisitesValuesTemplateUrl        = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/emco/dcm/values/prerequisites-values.yaml"
 	UpdateLogicalClusterTemplateUrl       = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/dcm/update-lc.yaml"
+	// For Install Flannel CNI
+	EmptyProfileForCompositeAppURL = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/vfw/vfw/profile.tar.gz"
+	CompositeAppTemplateURL        = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/vfw/vfw/test-vfw.yaml"
+	PrerequisiteCompositeAppURL    = "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/emco/vfw/vfw/prerequisites.yaml"
 )
 
 //+kubebuilder:rbac:groups=intent.automation.dcn.ssu.ac.kr,resources=logicalclustercontrolplaneproviders,verbs=get;list;watch;create;update;patch;delete
@@ -190,9 +198,10 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 			ownerLCluster.Status.Phase = intentv1.ConditionType(capoStatus.Phase)
 		}
 		if len(capoStatus.Conditions) > 0 {
-			ownerLCluster.Status.FailureMessage = capoStatus.Conditions[0].Message
-			ownerLCluster.Status.FailureReason = capoStatus.Conditions[0].Reason
-			ownerLCluster.Status.Status = string(capoStatus.Conditions[0].Status)
+			lastCondition := capoStatus.Conditions[len(capoStatus.Conditions)-1]
+			ownerLCluster.Status.FailureMessage = lastCondition.Message
+			ownerLCluster.Status.FailureReason = lastCondition.Reason
+			ownerLCluster.Status.Status = string(lastCondition.Status)
 
 		}
 		if lenOfLogicalClusterStatus < lenOfLogicalClusterMember {
@@ -250,76 +259,91 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 			kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
 			if err != nil {
 				loggerLKP.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
-			}
-			kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
-			prereString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
-			// TODO Add Cluster to EMCO Logical CLuster
-			prereValueFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &prereString)
-			prereTemplateFileContent, err := GetTemplateFile(prerequisitesTemplateUrl)
-			if err != nil {
-				loggerLKP.Error(err, "Error when get Prerequisite Template file: "+prerequisitesTemplateUrl)
-			}
-			prereTemplateFilePath, err := emcoctl.SaveValueFile("prequisitesTemplate.yaml", folderCAPOCluster, &prereTemplateFileContent)
-			//
-			// TODO Create Logical Cluster in EMCO
-			//
-			PrerequisitesLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, prereTemplateFilePath, prereValueFilePath)
-			//
-			// TODO Add Cluster to Logical CLuster
-			//
-			AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
-			if err != nil {
-				loggerLKP.Error(err, "Error when get Add Cluster Template file: "+registrationLogicalClusterTemplateUrl)
-			}
-			AddClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
-			AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, AddClusterTemplateFilePath, prereValueFilePath)
-			//
-			// TODO: Instantiate Logical Cluster
-			//
-			InstantiateLogicalClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
-			if err != nil {
-				loggerLKP.Error(err, "Error when get Instantiate Template file: "+registrationLogicalClusterTemplateUrl)
-			}
-			InstantiateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("InstantiateLogicalClusterTemplate.yaml", folderCAPOCluster, &InstantiateLogicalClusterTemplateFileContent)
-			// emcoctl --config emco-cfg.yaml apply -f instantiate-lc.yaml -v values.yaml
-			InstansiateLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, InstantiateLogicalClusterTemplateFilePath, prereValueFilePath)
-			// }
-			// } else {
-			// var err error
-			// // TODO Create EMCO Cluster Provider
-			// folderCAPOCluster := "/tmp/" + logicalCluster.Name
-			// // TODO Get kubeconfig of Cluster
-			// // Get KubeCOnfig
-			// kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
-			// if err != nil {
-			// 	loggerLKP.Error(err, "Error when get Kubeconfig (add cluster to logical cluster): "+CAPOClusters.Name)
-			// }
-			// kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".yaml"), folderCAPOCluster, &kubeconfig)
-			// // Create values file for Apply to EMCO server
-			// valueFileContentString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
-			// ValuesFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &valueFileContentString)
-			// AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
-			// if err != nil {
-			// 	loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster)")
-			// }
-			AddClusterTemplateFilePath, err = emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
-			// emcoctl --config emco-cfg.yaml apply -f 2ndcluster.yaml -v values.yaml
-			AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, AddClusterTemplateFilePath, prereValueFilePath)
+			} else {
+				kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
+				prereString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
+				// TODO Add Cluster to EMCO Logical CLuster
+				prereValueFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &prereString)
+				prereTemplateFileContent, err := GetTemplateFile(prerequisitesTemplateUrl)
+				if err != nil {
+					loggerLKP.Error(err, "Error when get Prerequisite Template file: "+prerequisitesTemplateUrl)
+				}
+				prereTemplateFilePath, err := emcoctl.SaveValueFile("prequisitesTemplate.yaml", folderCAPOCluster, &prereTemplateFileContent)
+				//
+				// TODO Create Logical Cluster in EMCO
+				//
+				PrerequisitesLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, prereTemplateFilePath, prereValueFilePath)
+				//
+				// TODO Add Cluster to Logical CLuster
+				//
+				AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
+				if err != nil {
+					loggerLKP.Error(err, "Error when get Add Cluster Template file: "+registrationLogicalClusterTemplateUrl)
+				}
+				AddClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
+				AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, AddClusterTemplateFilePath, prereValueFilePath)
+				//
+				// TODO: Instantiate Logical Cluster
+				//
+				InstantiateLogicalClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
+				if err != nil {
+					loggerLKP.Error(err, "Error when get Instantiate Template file: "+registrationLogicalClusterTemplateUrl)
+				}
+				InstantiateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("InstantiateLogicalClusterTemplate.yaml", folderCAPOCluster, &InstantiateLogicalClusterTemplateFileContent)
+				// emcoctl --config emco-cfg.yaml apply -f instantiate-lc.yaml -v values.yaml
+				InstansiateLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, InstantiateLogicalClusterTemplateFilePath, prereValueFilePath)
+				// }
+				// } else {
+				// var err error
+				// // TODO Create EMCO Cluster Provider
+				// folderCAPOCluster := "/tmp/" + logicalCluster.Name
+				// // TODO Get kubeconfig of Cluster
+				// // Get KubeCOnfig
+				// kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
+				// if err != nil {
+				// 	loggerLKP.Error(err, "Error when get Kubeconfig (add cluster to logical cluster): "+CAPOClusters.Name)
+				// }
+				// kubePath, err := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".yaml"), folderCAPOCluster, &kubeconfig)
+				// // Create values file for Apply to EMCO server
+				// valueFileContentString, err := CreateLogicalClusterPrerequisitesValueContent(&logicalCluster, CAPOClusters, kubePath)
+				// ValuesFilePath, err := emcoctl.SaveValueFile("prerequisitesValues.yaml", folderCAPOCluster, &valueFileContentString)
+				// AddClusterTemplateFileContent, err := GetTemplateFile(registrationLogicalClusterTemplateUrl)
+				// if err != nil {
+				// 	loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster)")
+				// }
+				AddClusterTemplateFilePath, err = emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &AddClusterTemplateFileContent)
+				// emcoctl --config emco-cfg.yaml apply -f 2ndcluster.yaml -v values.yaml
+				AddClusterToLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, AddClusterTemplateFilePath, prereValueFilePath)
 
-			// TODO: Update Logical Cluster
-			UpdateLogicalClusterTemplateFileContent, err := GetTemplateFile(UpdateLogicalClusterTemplateUrl)
-			if err != nil {
-				loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster): "+UpdateLogicalClusterTemplateUrl)
+				// TODO: Update Logical Cluster
+				UpdateLogicalClusterTemplateFileContent, err := GetTemplateFile(UpdateLogicalClusterTemplateUrl)
+				if err != nil {
+					loggerLKP.Error(err, "Error when get Add Cluster Template file (add cluster to logical cluster): "+UpdateLogicalClusterTemplateUrl)
+				}
+				UpdateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &UpdateLogicalClusterTemplateFileContent)
+				// TODO: Update Logical Cluster
+				// emcoctl --config emco-cfg.yaml apply -f update-lc.yaml -v values.yaml
+				UpdateLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, UpdateLogicalClusterTemplateFilePath, prereValueFilePath)
+				// Clean UP
+				// defer emcoctl.CleanUp(kubePath)
+				// defer emcoctl.CleanUp(AddClusterTemplateFilePath)
+				// defer emcoctl.CleanUp(InstantiateLogicalClusterTemplateFileContent)
+
+				//************************Install Software*****************//
+				// First check status install of cluster
+				if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
+					loggerLKP.Info("Start installing software")
+					// Install CNI
+					r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
+
+				}
+
+				// Install Prometheus
+				// Developing
 			}
-			UpdateLogicalClusterTemplateFilePath, err := emcoctl.SaveValueFile("AddClusterTemplate.yaml", folderCAPOCluster, &UpdateLogicalClusterTemplateFileContent)
-			// TODO: Update Logical Cluster
-			// emcoctl --config emco-cfg.yaml apply -f update-lc.yaml -v values.yaml
-			UpdateLogicalCluster(EMCOApplyFlag, EMCOConfigFilePath, UpdateLogicalClusterTemplateFilePath, prereValueFilePath)
-			// Clean UP
-			// defer emcoctl.CleanUp(kubePath)
-			// defer emcoctl.CleanUp(AddClusterTemplateFilePath)
-			// defer emcoctl.CleanUp(InstantiateLogicalClusterTemplateFileContent)
+
 		}
+
 		// }
 
 		// Find status of cluster and check if registration is false
@@ -533,8 +557,8 @@ func GetTemplateFile(url string) (string, error) {
 func CreateLogicalClusterPrerequisitesValueContent(lCluster *intentv1.LogicalCluster, capoCluster *capiv1alpha4.Cluster, kubePath string) (string, error) {
 	hostAPIEndpoint := capoCluster.Spec.ControlPlaneEndpoint.Host
 	valuesMap := map[string]string{
-		"PROJECTNAME":       "dcn",
-		"CLUSTERPROVIDER":   "starlab",
+		"PROJECTNAME":       lCluster.ObjectMeta.Labels["automation.dcn.ssu.ac.kr/project"],
+		"CLUSTERPROVIDER":   lCluster.ObjectMeta.Labels["tenant"],
 		"CLUSTERNAME":       capoCluster.Name,
 		"CLUSTERREF":        capoCluster.Name + "-ref",
 		"LOGICALCLOUD":      lCluster.Name,
@@ -694,7 +718,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) getKubeConfigCluster(ctx 
 		Namespace: nameSpace,
 		Name:      Name(clusterName, KubeConfigSecretSuffix),
 	}
-	if err := r.Get(ctx, secretKey, secret); err != nil {
+	if err := r.Client.Get(ctx, secretKey, secret); err != nil {
 		return "nil", err
 	}
 	secretBytes, err := toKubeconfigBytes(secret)
@@ -760,10 +784,10 @@ func (r *LogicalClusterControlPlaneProviderReconciler) FlannelInstaller(kubeConf
 		version = "v0.22.0"
 	}
 	installer := SetUpInstaller(r.Client)
-	calicoUrl := "https://raw.githubusercontent.com/flannel-io/flannel/{VERSION}/Documentation/kube-flannel.yml"
+	flannelUrl := "https://raw.githubusercontent.com/flannel-io/flannel/{VERSION}/Documentation/kube-flannel.yml"
 	cniComponent := InstallComponent{
 		Name:           "flannel-cni",
-		URL:            calicoUrl,
+		URL:            flannelUrl,
 		Version:        version,
 		KubeConfigPath: kubeConfigPath,
 	}
@@ -771,7 +795,31 @@ func (r *LogicalClusterControlPlaneProviderReconciler) FlannelInstaller(kubeConf
 
 	return &installer, nil
 }
-func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(context context.Context, request ctrl.Request) error {
+func (r *LogicalClusterControlPlaneProviderReconciler) FlannelEMCOInstaller(kubeConfigPath, version, podCIDR string) error {
+	// Flannel Version
+	// https://raw.githubusercontent.com/flannel-io/flannel/v0.22.0/Documentation/kube-flannel.yml
+	// Default in Flannel: POD_CIDR="10.244.0.0/16"
+	if len(podCIDR) < 4 {
+		podCIDR = "10.244.0.0/16"
+	}
+	flannelUrl := "https://raw.githubusercontent.com/ntnguyencse/L-KaaS/main/templates/cni/flannel/flannel.tar.gz"
+	// Download kubeflannel file
+	resp, err := grabfile.Get("/tmp/emco-tmp/", flannelUrl)
+	if err != nil {
+		loggerLKP.Error(err, "Error get Flannel helm chart: FlannelEMCOInstallerFunc")
+	}
+	_ = resp
+	return nil
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(context context.Context, request ctrl.Request, kubePath string, cluster *intentv1.Cluster, CAPICluster *capiv1alpha4.Cluster) error {
+	// clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.RegistrationkubePath
+	// Install CNI
+	loggerLKP.Info("Begin Install Flannel")
+	flannelInstaller, _ := r.FlannelInstaller(kubePath, "v0.2.0", CAPICluster.Spec.ClusterNetwork.Pods.CIDRBlocks[0])
+	flannelInstaller.Install(CAPICluster.Name)
+	loggerLKP.Info("Finish install Flannel")
 
+	// Update cluster status
+	cluster.Status.Registration = true
 	return nil
 }
