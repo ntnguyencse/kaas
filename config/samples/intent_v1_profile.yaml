@@ -7,7 +7,7 @@ metadata:
     revision: 1.0.0
     type: ClusterAPITemplate
   name: clusterapi-resource-template-default
-  namespace: kube-system
+  namespace: default
 spec:
   values:
     filename: cluster-template.yaml
@@ -30,7 +30,7 @@ spec:
     podCIDR: '[10.244.0.0/16]'
     serviceCIDR: '[192.168.0.0/16]'
     url: https://github.com/flannel-io/flannel/releases/download/v0.22.0/flannel.tgz
-    version: 0.20.0
+    version: 0.22.0
 ---
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
