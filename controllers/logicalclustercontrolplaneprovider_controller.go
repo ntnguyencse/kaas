@@ -814,6 +814,9 @@ func (r *LogicalClusterControlPlaneProviderReconciler) FlannelEMCOInstaller(kube
 	return nil
 }
 func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(ctx context.Context, req ctrl.Request, kubePath string, cluster *intentv1.Cluster, CAPICluster *capiv1alpha4.Cluster) error {
+	// clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.RegistrationkubePath
+	// Install CNI
+	loggerLKP.Info("Begin Install CNI")
 	// Get Profiles related to Clusters
 	listProfiles, err := r.GetListProfile(ctx, req)
 	if err != nil {
@@ -841,7 +844,8 @@ func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(
 		}
 
 	}
-
+	loggerLKP.Info("Finish install CNI")
+	loggerLKP.Info("Begin install Software")
 	// 2. Software Profiles
 	for _, item := range cluster.Spec.Software {
 		// 1. CNI Profiles
@@ -864,11 +868,7 @@ func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(
 			}
 		}
 	}
-	// clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.RegistrationkubePath
-	// Install CNI
-	loggerLKP.Info("Begin Install CNI")
-
-	loggerLKP.Info("Finish install CNI")
+	loggerLKP.Info("Finish install Software")
 
 	// Update cluster status
 	cluster.Status.Registration = true
