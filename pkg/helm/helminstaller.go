@@ -16,3 +16,12 @@ func test() {
 		fmt.Println("error: 2", err)
 	}
 }
+func Install(kubePath, chartName, chartPath, namespace string) error {
+	installArgs := []string{"install", chartName, chartPath, "--namespace", namespace,  "--kubeconfig", kubePath}
+	err := helmlib.ApplyHelmWrapper(kubePath, chartPath, true, true, installArgs, []string{})
+	if err != nil {
+		fmt.Println("Error when install application:", chartName, chartPath, kubePath, err)
+	}
+	return err
+
+}

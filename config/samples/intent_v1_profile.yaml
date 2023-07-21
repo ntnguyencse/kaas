@@ -7,7 +7,7 @@ metadata:
     revision: 1.0.0
     type: ClusterAPITemplate
   name: clusterapi-resource-template-default
-  namespace: default
+  namespace: kube-system
 spec:
   values:
     filename: cluster-template.yaml
@@ -26,9 +26,47 @@ metadata:
 spec:
   values:
     cni: flannel
+    namespace: kube-system
     podCIDR: '[10.244.0.0/16]'
     serviceCIDR: '[192.168.0.0/16]'
+    url: https://github.com/flannel-io/flannel/releases/download/v0.22.0/flannel.tgz
     version: 0.20.0
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    revision: 1.0.0
+    type: CNITemplate
+  name: calico-default
+  namespace: default
+spec:
+  values:
+    cni: calico
+    namespace: kube-system
+    podCIDR: '[192.168.0.0/16]'
+    serviceCIDR: '[192.168.0.0/16]'
+    url: https://github.com/projectcalico/calico/releases/download/v3.26.1/tigera-operator-v3.26.1.tgz
+    version: v3.26.1
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    revision: 1.0.0
+    type: CNITemplate
+  name: cilium-default
+  namespace: default
+spec:
+  values:
+    cni: cilium
+    namespace: kube-system
+    podCIDR: '[192.168.0.0/16]'
+    serviceCIDR: '[192.168.0.0/16]'
+    url: https://github.com/ntnguyencse/helm-mod/raw/main/test/charts/cilium-1.13.0.tar.gz
+    version: 1.13.0
 ---
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
@@ -65,4 +103,6 @@ metadata:
 spec:
   values:
     configmap: prometheus-config
+    url: https://github.com/prometheus-community/helm-charts/releases/download/kube-prometheus-stack-48.1.1/kube-prometheus-stack-48.1.1.tgz
+    namespace: prometheus-system
     version: 2.41.0
