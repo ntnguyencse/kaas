@@ -333,12 +333,18 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 
 				//************************Install Software*****************//
 				// First check status install of cluster
-				if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
-					loggerLKP.Info("Start installing software")
-					// Install CNI
-					r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
+				// if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
+				// 	loggerLKP.Info("Start installing software")
+				// 	// Check healthy of target cluster
+				// 	serverVer, errGetVer := kubernetesclient.GetKubernetesServerVersion(kubePath)
+				// 	if errGetVer == nil && len(serverVer.String()) > 3 {
+				// 		// Install CNI
+				// 		r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
+				// 	} else {
+				// 		loggerLKP.Error(errGetVer, "Get Cluster version of "+ownerLCluster.Name)
+				// 	}
 
-				}
+				// }
 
 				// Install Prometheus
 				// Developing

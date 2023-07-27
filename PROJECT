@@ -67,4 +67,9 @@ resources:
   kind: Profile
   path: github.com/ntnguyencse/L-KaaS/api/v1
   version: v1
+- controller: true
+  domain: automation.dcn.ssu.ac.kr
+  group: intent
+  kind: SoftwareInstallation
+  version: v1
 version: "3"

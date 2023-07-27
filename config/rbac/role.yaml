@@ -187,3 +187,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - softwareinstallations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - softwareinstallations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - intent.automation.dcn.ssu.ac.kr
+  resources:
+  - softwareinstallations/status
+  verbs:
+  - get
+  - patch
+  - update
