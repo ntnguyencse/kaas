@@ -83,34 +83,35 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 			return ctrl.Result{}, nil
 		}
 		capoStatus := CAPOClusters.Status
-		// Get kubeconfig
-		kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
-		if err != nil {
-			loggerSIC.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
-		}
-		if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
-			if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
-				loggerSIC.Info("Start installing software")
-				folderCAPOCluster := "/tmp/" + ownerLCluster.Name + randomstring.String(5) + "/"
-				kubePath, _ := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
-				// Check healthy of target cluster
-				serverVer, errGetVer := kubernetesclient.GetKubernetesServerVersion(kubePath)
-				if errGetVer == nil && len(serverVer.String()) > 3 {
-					// Install CNI
-					r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
-					// Update status
-					errUpdate := r.Client.Status().Update(ctx, &ownerLCluster)
-					if errUpdate != nil {
-						loggerSIC.Error(errUpdate, "Error when update LKaaS cluster status")
-						return ctrl.Result{}, errUpdate
+		if capoStatus.Phase != string(capiv1alpha4.ClusterPhaseProvisioned) {
+			// Get kubeconfig
+			kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
+			if err != nil {
+				loggerSIC.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
+			}
+			if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
+				if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
+					loggerSIC.Info("Start installing software")
+					folderCAPOCluster := "/tmp/" + ownerLCluster.Name + randomstring.String(5) + "/"
+					kubePath, _ := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
+					// Check healthy of target cluster
+					serverVer, errGetVer := kubernetesclient.GetKubernetesServerVersion(kubePath)
+					if errGetVer == nil && len(serverVer.String()) > 3 {
+						// Install CNI
+						r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
+						// Update status
+						errUpdate := r.Client.Status().Update(ctx, &ownerLCluster)
+						if errUpdate != nil {
+							loggerSIC.Error(errUpdate, "Error when update LKaaS cluster status")
+							return ctrl.Result{}, errUpdate
+						}
+						return ctrl.Result{}, nil
+					} else {
+						loggerSIC.Error(errGetVer, "Get Cluster version of "+ownerLCluster.Name)
+						return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
 					}
-					return ctrl.Result{}, nil
-				} else {
-					loggerSIC.Error(errGetVer, "Get Cluster version of "+ownerLCluster.Name)
 
-					return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
 				}
-
 			}
 		}
 
