@@ -86,9 +86,9 @@ spec:
     type: ClusterAPITemplate
   values:
     controlPlaneMachineCount: "1"
-    controlplaneFlavor: m1.small
+    controlplaneFlavor: m1.medium
     kubernetesVersion: v1.24.8
-    workerFlavor: m1.small
+    workerFlavor: m1.medium
     workerMachineCount: "1"
 ---
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
