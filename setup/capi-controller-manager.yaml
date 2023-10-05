@@ -1,0 +1,185 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    seccomp.security.alpha.kubernetes.io/pod: runtime/default
+  creationTimestamp: "2023-08-26T14:48:04Z"
+  generateName: capi-controller-manager-67676bf555-
+  labels:
+    cluster.x-k8s.io/provider: cluster-api
+    control-plane: controller-manager
+    pod-template-hash: 67676bf555
+  name: capi-controller-manager-67676bf555-6slt9
+  namespace: capi-system
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: capi-controller-manager-67676bf555
+    uid: 3a1f92d4-d37c-44a7-8479-53249603c15e
+  resourceVersion: "17142798"
+  uid: 62d43a51-695f-4189-bcc8-453e1354547c
+spec:
+  containers:
+  - args:
+    - --leader-elect
+    - --metrics-bind-addr=localhost:8080
+    - --feature-gates=MachinePool=false,ClusterResourceSet=false,ClusterTopology=false,RuntimeSDK=false,LazyRestmapper=false
+    command:
+    - /manager
+    env:
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.namespace
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.name
+    - name: POD_UID
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.uid
+    image: registry.k8s.io/cluster-api/cluster-api-controller:v1.4.3
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /healthz
+        port: healthz
+        scheme: HTTP
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    name: manager
+    ports:
+    - containerPort: 9443
+      name: webhook-server
+      protocol: TCP
+    - containerPort: 9440
+      name: healthz
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /readyz
+        port: healthz
+        scheme: HTTP
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      privileged: false
+      runAsGroup: 65532
+      runAsUser: 65532
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /tmp/k8s-webhook-server/serving-certs
+      name: cert
+      readOnly: true
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-l6zcw
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: ubuntu2
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount: capi-manager
+  serviceAccountName: capi-manager
+  terminationGracePeriodSeconds: 10
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: cert
+    secret:
+      defaultMode: 420
+      secretName: capi-webhook-service-cert
+  - name: kube-api-access-l6zcw
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-26T14:48:04Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-31T07:45:06Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-31T07:45:06Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-26T14:48:04Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: docker://4a9485f1b6495f728272170b624895a9f7659fb6d7de601c648999833b6fcac0
+    image: registry.k8s.io/cluster-api/cluster-api-controller:v1.4.3
+    imageID: docker-pullable://registry.k8s.io/cluster-api/cluster-api-controller@sha256:d2d1566285af3344a00e70d0bbf4293200b8cf09c1c258324035d0f77a73c92c
+    lastState:
+      terminated:
+        containerID: docker://1ba21dea65353ef1b3b1be156db4b910896bc777f770ad6814aecb1afb2cc77c
+        exitCode: 1
+        finishedAt: "2023-08-31T07:45:03Z"
+        reason: Error
+        startedAt: "2023-08-31T02:47:17Z"
+    name: manager
+    ready: true
+    restartCount: 2
+    started: true
+    state:
+      running:
+        startedAt: "2023-08-31T07:45:04Z"
+  hostIP: 192.168.40.66
+  phase: Running
+  podIP: 10.244.2.38
+  podIPs:
+  - ip: 10.244.2.38
+  qosClass: BestEffort
+  startTime: "2023-08-26T14:48:04Z"
