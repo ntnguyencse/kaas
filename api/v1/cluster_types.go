@@ -64,6 +64,7 @@ type ClusterSpec struct {
 	// Paused can be used to prevent controllers from processing the Cluster and all its associated objects.
 	// +optional
 	Paused bool `json:"paused,omitempty"`
+	DependOnProvider CloudProvider `json:"dependonprovider,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster

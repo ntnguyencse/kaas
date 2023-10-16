@@ -106,3 +106,44 @@ spec:
     url: https://github.com/prometheus-community/helm-charts/releases/download/kube-prometheus-stack-48.1.1/kube-prometheus-stack-48.1.1.tgz
     namespace: prometheus-system
     version: 2.41.0
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    name: aws-small-cluster
+    provider: aws
+    revision: 1.0.0
+    type: ClusterTemplate
+  name: aws-small-cluster
+  namespace: default
+spec:
+  blueprint:
+  - name: clusterapi-aws-resource-template-default
+    revision: 1.0.0
+    type: ClusterAPITemplate
+  values:
+    controlPlaneMachineCount: "1"
+    controlplaneFlavor: "t3.large"
+    kubernetesVersion: v1.24.8
+    workerFlavor: t3.large
+    workerMachineCount: "1"
+    awsRegion: "ap-northeast-2"
+    awsSshKey: "ntnguyen"
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    namespace: default
+    revision: 1.0.0
+    type: ClusterAPITemplate
+  name: clusterapi-aws-resource-template-default
+  namespace: default
+spec:
+  values:
+    filename: cluster-template.yaml
+    url: https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/aws/
+    version: v2.2.2

@@ -37,3 +37,5 @@ config/openstack
 test/
 config/samples/capi-test.yaml
 config/emco/.emco.yaml
+ntnguyen-openrc.sh
+openstack-env-vars.sh
