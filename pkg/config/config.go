@@ -8,6 +8,7 @@ import (
 
 const DEFAULT_CONFIG_PATH string = "./config.yml"
 const DEFAULT_OPENSTACKCONFIG_PATH string = "./openstack-config.yml"
+const DEFAULT_AWSCONFIG_PATH string = "./capactl.yml"
 
 type Configuration struct {
 	Owner                          string `required:"true" env:"OWNER"`
@@ -44,6 +45,25 @@ type OpenStackConfiguration struct {
 	OpenstackControlPlaneMachineFlavor string `required:"true" env:"OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR"`
 	OpenstackNodeMachineFlavor         string `required:"true" env:"OPENSTACK_NODE_MACHINE_FLAVOR"`
 	KubernetesVersion                  string `required:"true" env:"KUBERNETES_VERSION"`
+}
+
+type AWSConfiguration struct {
+	AwsRegion                  string `required:"true" env:"AWS_REGION"`
+	AwsSSHKeyName              string `required:"true" env:"AWS_SSH_KEY_NAME"`
+	AwsControlPlaneMachineType string `required:"true" env:"AWS_CONTROL_PLANE_MACHINE_TYPE"`
+	AwsNodeMachineType         string `required:"true" env:"AWS_NODE_MACHINE_TYPE"`
+	KubernetesVersion          string `required:"true" env:"KUBERNETES_VERSION"`
+	AwsB64EncodedCredentials   string `required:"true" env:"AWS_B64ENCODED_CREDENTIALS"`
+}
+
+func LoadAWSCredentials(path string) AWSConfiguration {
+	var config AWSConfiguration
+	if len(path) < 1 {
+		configor.Load(&config, DEFAULT_AWSCONFIG_PATH)
+	} else {
+		configor.Load(&config, path)
+	}
+	return config
 }
 
 func LoadOpenStackCredentials(path string) OpenStackConfiguration {

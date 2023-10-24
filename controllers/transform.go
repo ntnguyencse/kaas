@@ -13,6 +13,7 @@ import (
 // CAPI Openstack provider url components
 const OPENSTACK_PROVIDER_URL string = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/v0.7.1/infrastructure-components.yaml"
 const DEFAULT_CAPI_CONFIG_PATH string = "/.l-kaas/config/capi/capictl.yml"
+const DEFAULT_CAPI_AWS_CONFIG_PATH string = "/.l-kaas/config/capi/capactl.yml"
 
 // Require export KUBECONFIG before running
 var KUBECONFIG string
@@ -33,6 +34,21 @@ var configs = map[string]string{
 	"KUBERNETES_VERSION":                     "1.24.5",
 	"CONTROL_PLANE_MACHINE_COUNT":            "3",
 	"WORKER_MACHINE_COUNT":                   "3",
+}
+
+// AWS Configuration format
+var awsConfigs = map[string]string{
+	/*
+		export AWS_REGION=us-east-1
+		export AWS_SSH_KEY_NAME=default
+		# Select instance types
+		export AWS_CONTROL_PLANE_MACHINE_TYPE=t3.large
+		export AWS_NODE_MACHINE_TYPE=t3.large
+	*/
+	"AWS_REGION":                     "AWS_REGION",
+	"AWS_SSH_KEY_NAME":               "AWS_SSH_KEY_NAME",
+	"AWS_CONTROL_PLANE_MACHINE_TYPE": "AWS_CONTROL_PLANE_MACHINE_TYPE",
+	"AWS_NODE_MACHINE_TYPE":          "AWS_NODE_MACHINE_TYPE",
 }
 
 // Read the Cluster Description
@@ -211,10 +227,46 @@ func getCredentialsForOpenStackProvider(configPath string) (map[string]string, e
 
 	return secrets, nil
 }
+
+func getCredentialsForAWSProvider(configPath string) (map[string]string, error) {
+	// Current only support for OPENSTACK, Edit this function to support more provider
+	if configPath == "" {
+		configPath = DEFAULT_CAPI_CONFIG_PATH
+	}
+
+	providerConfigLoaded := config.LoadAWSCredentials(configPath)
+	// loggerCL.Info("Print LoadOpenStackCredentials", "Configs", providerConfigLoaded)
+	// 	"AWS_REGION":                     "AWS_REGION",
+	// "AWS_SSH_KEY_NAME":               "AWS_SSH_KEY_NAME",
+	// "AWS_CONTROL_PLANE_MACHINE_TYPE": "AWS_CONTROL_PLANE_MACHINE_TYPE",
+	// "AWS_NODE_MACHINE_TYPE":          "AWS_NODE_MACHINE_TYPE",
+	secrets := map[string]string{
+		/*
+			export AWS_REGION=ap-northeast-2
+			export AWS_SSH_KEY_NAME=default
+			# Select instance types
+			export AWS_CONTROL_PLANE_MACHINE_TYPE=t3.large
+			export AWS_NODE_MACHINE_TYPE=t3.large
+		*/
+		"AWS_REGION":                     providerConfigLoaded.AwsRegion,
+		"AWS_SSH_KEY_NAME":               providerConfigLoaded.AwsSSHKeyName,
+		"AWS_CONTROL_PLANE_MACHINE_TYPE": providerConfigLoaded.AwsControlPlaneMachineType,
+		"AWS_NODE_MACHINE_TYPE":          providerConfigLoaded.AwsNodeMachineType,
+	}
+	return secrets, nil
+}
 func GetConfigForOpenStack() intentv1.ProviderConfig {
 	return intentv1.ProviderConfig{
 		Name:         CAPIClient.OPENSTACK,
 		URL:          CAPIClient.OPENSTACK_URL,
+		ProviderType: CAPIClient.InfrastructureProviderType,
+	}
+}
+
+func GetConfigForAWS() intentv1.ProviderConfig {
+	return intentv1.ProviderConfig{
+		Name:         CAPIClient.AWS,
+		URL:          CAPIClient.AWS_URL,
 		ProviderType: CAPIClient.InfrastructureProviderType,
 	}
 }

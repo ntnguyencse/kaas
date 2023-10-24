@@ -33,9 +33,11 @@ const (
 )
 const (
 	OPENSTACK = "openstack"
+	AWS       = "aws"
 )
 const (
 	OPENSTACK_URL = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/v0.6.4/infrastructure-components.yaml"
+	AWS_URL       = "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v2.2.2/infrastructure-components.yaml"
 )
 
 type Provider struct {
