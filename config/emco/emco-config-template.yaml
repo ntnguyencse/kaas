@@ -1,0 +1,21 @@
+  orchestrator:
+    host: <controlplane IP>
+    port: 30415
+  clm:
+    host: <controlplane IP>
+    port: 30461
+  ncm:
+    host: <controlplane IP>
+    port: 30481
+  ovnaction:
+    host: <controlplane IP>
+    port: 30451
+  dcm:
+    host: <controlplane IP>
+    port: 30477
+  gac:
+    host: <controlplane IP>
+    port: 30420
+  dtc:
+    host: <controlplane IP>
+    port: 30418

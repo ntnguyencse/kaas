@@ -2,3 +2,4 @@ kubebuilder init --domain automation.dcn.ssu.ac.kr --owner "Nguyen Thanh Nguyen"
 kubebuilder create api --controller true --group intent --version v1 --kind Cluster  --resource true
 make manifests
 kubebuilder create api --controller true --group intent --version v1 --kind ClusterCatalog  --resource true
+kubebuilder create api --controller true --group intent --version v1 --kind SoftwareInstallation 

@@ -1,26 +1,33 @@
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: LogicalCluster
 metadata:
-  name: logical-cluster-demo
+  name: sfc-logical-cluster
   labels:
     automation.dcn.ssu.ac.kr/project: project-name
     tenant: tenant-name
 spec:
   clusters:
     - cluster:
-      name: central-cluster
+      name: edge-cluster-1
       metadata:
         labels:
-          automation.dcn.ssu.ac.kr/location: central-cluster
+          automation.dcn.ssu.ac.kr/location: location-1
           automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
       spec:
         clustercatalog: openstack-medium-catalog
     - cluster:
-      name: edge-cluster-1
+      name: edge-cluster-2
       metadata:
         labels:
-          automation.dcn.ssu.ac.kr/location: edge-site-1
+          automation.dcn.ssu.ac.kr/location: location-2
           automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
       spec:
         clustercatalog: openstack-medium-catalog
-
+    - cluster:
+      name: edge-cluster-3
+      metadata:
+        labels:
+          automation.dcn.ssu.ac.kr/location: location-3
+          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+      spec:
+        clustercatalog: openstack-medium-catalog

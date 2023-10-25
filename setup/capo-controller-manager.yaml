@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2023-08-26T14:49:28Z"
+  generateName: capo-controller-manager-7d454d8df9-
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-openstack
+    control-plane: capo-controller-manager
+    pod-template-hash: 7d454d8df9
+  name: capo-controller-manager-7d454d8df9-2vfb6
+  namespace: capo-system
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: capo-controller-manager-7d454d8df9
+    uid: 7d47a97a-ace9-4e31-ae1a-3dce2b9917f3
+  resourceVersion: "17142805"
+  uid: c12598aa-7d68-4ed8-9660-67a33096d7c7
+spec:
+  containers:
+  - args:
+    - --leader-elect
+    - --v=2
+    - --metrics-bind-addr=127.0.0.1:8080
+    command:
+    - /manager
+    image: registry.k8s.io/capi-openstack/capi-openstack-controller:v0.7.0
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /healthz
+        port: healthz
+        scheme: HTTP
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    name: manager
+    ports:
+    - containerPort: 9443
+      name: webhook-server
+      protocol: TCP
+    - containerPort: 9440
+      name: healthz
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /readyz
+        port: healthz
+        scheme: HTTP
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /tmp/k8s-webhook-server/serving-certs
+      name: cert
+      readOnly: true
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-z5zkd
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: ubuntu2
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: capo-manager
+  serviceAccountName: capo-manager
+  terminationGracePeriodSeconds: 10
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: cert
+    secret:
+      defaultMode: 420
+      secretName: capo-webhook-service-cert
+  - name: kube-api-access-z5zkd
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-26T14:49:28Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-31T07:45:06Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-31T07:45:06Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2023-08-26T14:49:28Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: docker://fe2de8a2825fa459c99537dc63b8544f5d7c3ebef001f87a382cdfaaef8f470f
+    image: registry.k8s.io/capi-openstack/capi-openstack-controller:v0.7.0
+    imageID: docker-pullable://registry.k8s.io/capi-openstack/capi-openstack-controller@sha256:e4bdcbe2b1c1393283e2f086edd8677577d066f558e49abe37222249ac2781df
+    lastState:
+      terminated:
+        containerID: docker://ff15a501936b64a2485797fb56715d53ddb698bd7c1e840060c9a72e09a6f99d
+        exitCode: 1
+        finishedAt: "2023-08-31T07:45:03Z"
+        reason: Error
+        startedAt: "2023-08-31T02:47:17Z"
+    name: manager
+    ready: true
+    restartCount: 2
+    started: true
+    state:
+      running:
+        startedAt: "2023-08-31T07:45:04Z"
+  hostIP: 192.168.40.66
+  phase: Running
+  podIP: 10.244.2.40
+  podIPs:
+  - ip: 10.244.2.40
+  qosClass: BestEffort
+  startTime: "2023-08-26T14:49:28Z"

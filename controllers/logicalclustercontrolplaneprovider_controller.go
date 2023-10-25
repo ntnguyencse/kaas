@@ -49,6 +49,8 @@ import (
 
 	// kubernetesclient "github.com/ntnguyencse/L-KaaS/pkg/kubernetes-client"
 	grabfile "github.com/cavaliergopher/grab/v3"
+	helminstaller "github.com/ntnguyencse/L-KaaS/pkg/helm"
+	randomstring "github.com/ntnguyencse/L-KaaS/pkg/randstring"
 )
 
 // LogicalClusterControlPlaneProviderReconciler reconciles a LogicalClusterControlPlaneProvider object
@@ -331,12 +333,18 @@ func (r *LogicalClusterControlPlaneProviderReconciler) Reconcile(ctx context.Con
 
 				//************************Install Software*****************//
 				// First check status install of cluster
-				if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
-					loggerLKP.Info("Start installing software")
-					// Install CNI
-					r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
+				// if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
+				// 	loggerLKP.Info("Start installing software")
+				// 	// Check healthy of target cluster
+				// 	serverVer, errGetVer := kubernetesclient.GetKubernetesServerVersion(kubePath)
+				// 	if errGetVer == nil && len(serverVer.String()) > 3 {
+				// 		// Install CNI
+				// 		r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
+				// 	} else {
+				// 		loggerLKP.Error(errGetVer, "Get Cluster version of "+ownerLCluster.Name)
+				// 	}
 
-				}
+				// }
 
 				// Install Prometheus
 				// Developing
@@ -811,15 +819,87 @@ func (r *LogicalClusterControlPlaneProviderReconciler) FlannelEMCOInstaller(kube
 	_ = resp
 	return nil
 }
-func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(context context.Context, request ctrl.Request, kubePath string, cluster *intentv1.Cluster, CAPICluster *capiv1alpha4.Cluster) error {
+func (r *LogicalClusterControlPlaneProviderReconciler) ReconcileInstallSoftware(ctx context.Context, req ctrl.Request, kubePath string, cluster *intentv1.Cluster, CAPICluster *capiv1alpha4.Cluster) error {
 	// clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.RegistrationkubePath
 	// Install CNI
-	loggerLKP.Info("Begin Install Flannel")
-	flannelInstaller, _ := r.FlannelInstaller(kubePath, "v0.2.0", CAPICluster.Spec.ClusterNetwork.Pods.CIDRBlocks[0])
-	flannelInstaller.Install(CAPICluster.Name)
-	loggerLKP.Info("Finish install Flannel")
+	loggerLKP.Info("Begin Install CNI")
+	// Get Profiles related to Clusters
+	listProfiles, err := r.GetListProfile(ctx, req)
+	if err != nil {
+		loggerLKP.Error(err, "Error get profiles")
+	}
+	for _, item := range cluster.Spec.Network {
+		// 1. CNI Profiles
+		CNIProfileName := item.Name
+		CNIProfile, err := FindProfileWithName(listProfiles, CNIProfileName)
+		if err == nil {
+			// Install CNI
+			chartPath := CNIProfile.Spec.Values["url"]
+			chartName := CNIProfileName + "-" + randomstring.String(5)
+			CNINamespace := CNIProfile.Spec.Values["namespace"]
+			valueFilePath := CNIProfile.Spec.Values["value"]
+			// if strings.Contains(CNIProfileName, "flannel"){
+			// 	chartPath = flannelTemplate
+			// }
+
+			err = helminstaller.Install(kubePath, chartName, chartPath, valueFilePath, CNINamespace)
+			if err != nil {
+				loggerLKP.Error(err, "Error install Network components: "+CNIProfileName)
+				return err
+			}
+		}
+
+	}
+	loggerLKP.Info("Finish install CNI")
+	loggerLKP.Info("Begin install Software")
+	// 2. Software Profiles
+	for _, item := range cluster.Spec.Software {
+		// 1. CNI Profiles
+		SoftwareProfileName := item.Name
+		SoftwareProfile, err := FindProfileWithName(listProfiles, SoftwareProfileName)
+		if err == nil {
+			// Install CNI
+			chartPath := SoftwareProfile.Spec.Values["url"]
+			chartName := SoftwareProfileName + "-" + randomstring.String(5)
+			CNINamespace := SoftwareProfile.Spec.Values["namespace"]
+			valueFilePath := SoftwareProfile.Spec.Values["value"]
+			// if strings.Contains(CNIProfileName, "flannel"){
+			// 	chartPath = flannelTemplate
+			// }
+
+			err = helminstaller.Install(kubePath, chartName, chartPath, valueFilePath, CNINamespace)
+			if err != nil {
+				loggerLKP.Error(err, "Error install Network components: "+SoftwareProfileName)
+				return err
+			}
+		}
+	}
+	loggerLKP.Info("Finish install Software")
 
 	// Update cluster status
 	cluster.Status.Registration = true
+	// Clean up
+	// defer os.RemoveAll("$HOME/.cache/helm/repository")
 	return nil
+}
+func (r *LogicalClusterControlPlaneProviderReconciler) GetListProfile(ctx context.Context, req ctrl.Request) (*intentv1.ProfileList, error) {
+	listProfiles := intentv1.ProfileList{}
+	err := r.Client.List(ctx, &listProfiles)
+	if err != nil {
+		loggerCL.Error(err, "ReconcileInstallSoftware", "Error when list profiles")
+		return nil, err
+	}
+	return &listProfiles, err
+}
+
+func FindProfileWithName(listProfiles *intentv1.ProfileList, name string) (intentv1.Profile, error) {
+	if len(listProfiles.Items) < 1 {
+		return intentv1.Profile{}, errors.New("List Profiles is empty")
+	}
+	for _, item := range listProfiles.Items {
+		if item.Name == name {
+			return item, nil
+		}
+	}
+	return intentv1.Profile{}, errors.New("Can not find any profile match with name: " + name)
 }

@@ -3,5 +3,7 @@ sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
 clusterctl version
 export CLUSTER_TOPOLOGY=true
 # Initialize the management cluster
-clusterctl init --infrastructure=openstack:v0.6.4 --core=cluster-api:v1.4.0 --bootstrap=kubeadm:v1.4.0 --control-plane=kubeadm:v1.4.0 -v5
+# clusterctl init --infrastructure=openstack:v0.6.4 --core=cluster-api:v1.4.0 --bootstrap=kubeadm:v1.4.0 --control-plane=kubeadm:v1.4.0 -v5
+clusterctl init --infrastructure=openstack:v0.7.0,aws:v2.2.2 --core=cluster-api:v1.4.0 --bootstrap=kubeadm:v1.4.0 --control-plane=kubeadm:v1.4.0 -v5
 # clusterctl init --infrastructure=openstack:v0.7.0 -v5
+clusterctl init --infrastructure=openstack:v0.7.0,aws:v2.2.2 --core=cluster-api:v1.4.0 --bootstrap=kubeadm:v1.4.0 --control-plane=kubeadm:v1.4.0 --config /home/ubuntu/aws-capi/capi-config/config.yaml -v5

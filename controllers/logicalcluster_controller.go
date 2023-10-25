@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-logr/logr"
 	intentv1 "github.com/ntnguyencse/L-KaaS/api/v1"
@@ -299,11 +300,32 @@ func (r *LogicalClusterReconciler) CreateClusterFromClusterProfile(ctx context.C
 
 func (r *LogicalClusterReconciler) BuildClusterObjectFromCatalog(ctx context.Context, lcluster *intentv1.LogicalCluster, clusterMember *intentv1.ClusterMember, clusterCatalog *intentv1.ClusterCatalog) (intentv1.Cluster, error) {
 
+	catalog := clusterCatalog.Spec.Infrastructure
+	var infraProfile intentv1.ProfileInfo
+	var cloudProviderName intentv1.CloudProvider
+	if len(catalog) > 1 {
+		infraProfile = catalog[0]
+	} else if len(catalog) < 1 {
+		infraProfile = intentv1.ProfileInfo{
+			Name: "default",
+		}
+	}
+	if strings.Contains(infraProfile.Name, string(intentv1.AWS)) || strings.Contains(infraProfile.Name, string(intentv1.OPENSTACK)) {
+		if strings.Contains(infraProfile.Name, string(intentv1.AWS)) {
+			cloudProviderName = intentv1.AWS
+		} else if strings.Contains(infraProfile.Name, string(intentv1.OPENSTACK)) {
+			cloudProviderName = intentv1.OPENSTACK
+		}
+	} else {
+		cloudProviderName = intentv1.DEFAULT
+	}
 	// Get Profile from Catalog
 	clusterSpec := intentv1.ClusterSpec{
 		Infrastructure: clusterCatalog.Spec.Infrastructure,
 		Network:        clusterCatalog.Spec.Network,
 		Software:       clusterCatalog.Spec.Software,
+		// Assign value of Provider to value cluster Depend on Provider
+		DependOnProvider: cloudProviderName,
 	}
 	// Construct a Object
 	clusterObject := intentv1.Cluster{

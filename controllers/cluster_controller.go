@@ -51,6 +51,7 @@ type ClusterReconciler struct {
 var (
 	loggerCL                        = ctrl.Log.WithName("Cluster Controller")
 	CAPIConfigFilePath              string
+	CAPIAWSConfigFilePath           string
 	OpenStackProviderConfigFilePath string
 )
 
@@ -86,6 +87,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	CAPIConfigFilePath := os.Getenv("CAPICONFIGFILEPATH")
 	if len(CAPIConfigFilePath) < 1 {
 		CAPIConfigFilePath = DEFAULT_CAPI_CONFIG_PATH
+	}
+	CAPIAWSConfigFilePath := os.Getenv("CAPIAWSCONFIGFILEPATH")
+	if len(CAPIAWSConfigFilePath) < 1 {
+		CAPIAWSConfigFilePath = DEFAULT_CAPI_AWS_CONFIG_PATH
 	}
 	// Load Configuration
 	// configuration := config.LoadConfig(config.DEFAULT_CONFIG_PATH)
@@ -379,29 +384,101 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, clusterNameS
 	}
 	clusterDescriptiton, err := r.TransformClusterToClusterDescription(ctx, *cluster, clusterNameSpace, listProfiles.Items)
 	loggerCL.Info("Print CLuster Descrition", clusterDescriptiton.Name, clusterDescriptiton)
-	// Get Provider COnfig
-	OpenStackProviderConfig := GetConfigForOpenStack()
-	// Get Credentials of Provider
-	configs, err := getCredentialsForOpenStackProvider(CAPIConfigFilePath)
-	if err != nil {
-		loggerCL.Error(err, "getCredentialsForOpenStackProvider")
-	}
-	// Add config from CLuster Description to configs variables
-	// TODO: Change this function or redesign Profile Specs to easy to transform
-	// Current only use mapping variables
-	configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
+	// Based on which provider
 
-	ownerRefs := map[string]string{
-		"CLUSTER_OWNER_API_VERSION": cluster.DeepCopy().APIVersion,
-		"CLUSTER_OWNER_KIND":        cluster.DeepCopy().Kind,
-		"CLUSTER_OWNER_NAME":        cluster.DeepCopy().Name,
-		"CLUSTER_OWNER_UID":         string(cluster.ObjectMeta.DeepCopy().UID),
-	}
-	configs = AddToConfigs(configs, ownerRefs)
+	var infraProvider = cluster.Spec.DependOnProvider
+	switch infraProvider {
+	case intentv1.AWS:
+		// Provider AWS
+		loggerCL.Info("Translating using Provider AWS configurations", cluster.Name)
+		// Get AWS Configuration and transform
+		AWSProviderConfig := GetConfigForAWS()
+		// Get Credentials of Provider
+		configs, err := getCredentialsForAWSProvider(CAPIAWSConfigFilePath)
+		if err != nil {
+			loggerCL.Error(err, "getCredentialsForOpenStackProvider")
+		}
+		// Add config from CLuster Description to configs variables
+		// TODO: Change this function or redesign Profile Specs to easy to transform
+		// Current only use mapping variables
+		configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
 
-	clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
-	loggerCL.Info("Print CAPI Resources:", clusterDescriptiton.Name, clusterStr)
-	r.ApplyCAPIResourceToKubernertes(clusterDescriptiton.Name, clusterStr)
+		ownerRefs := map[string]string{
+			"CLUSTER_OWNER_API_VERSION": cluster.DeepCopy().APIVersion,
+			"CLUSTER_OWNER_KIND":        cluster.DeepCopy().Kind,
+			"CLUSTER_OWNER_NAME":        cluster.DeepCopy().Name,
+			"CLUSTER_OWNER_UID":         string(cluster.ObjectMeta.DeepCopy().UID),
+		}
+		configs = AddToConfigs(configs, ownerRefs)
+
+		clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, AWSProviderConfig, configs)
+		loggerCL.Info("Print CAPI Resources:", clusterDescriptiton.Name, clusterStr)
+		r.ApplyCAPIResourceToKubernertes(clusterDescriptiton.Name, clusterStr)
+		return clusterDescriptiton, err
+		// End AWS
+	case intentv1.OPENSTACK:
+		// Provider OPENSTACK
+		loggerCL.Info("Translating using Provider OPENSTACK configurations", cluster.Name)
+		/*
+			//////////////////////// OPENSTACK //////////////////////////////////////////////
+		*/
+		// Get Provider COnfig
+		OpenStackProviderConfig := GetConfigForOpenStack()
+		// Get Credentials of Provider
+		configs, err := getCredentialsForOpenStackProvider(CAPIConfigFilePath)
+		if err != nil {
+			loggerCL.Error(err, "getCredentialsForOpenStackProvider")
+		}
+		// Add config from CLuster Description to configs variables
+		// TODO: Change this function or redesign Profile Specs to easy to transform
+		// Current only use mapping variables
+		configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
+
+		ownerRefs := map[string]string{
+			"CLUSTER_OWNER_API_VERSION": cluster.DeepCopy().APIVersion,
+			"CLUSTER_OWNER_KIND":        cluster.DeepCopy().Kind,
+			"CLUSTER_OWNER_NAME":        cluster.DeepCopy().Name,
+			"CLUSTER_OWNER_UID":         string(cluster.ObjectMeta.DeepCopy().UID),
+		}
+		configs = AddToConfigs(configs, ownerRefs)
+
+		clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
+		loggerCL.Info("Print CAPI Resources:", clusterDescriptiton.Name, clusterStr)
+		r.ApplyCAPIResourceToKubernertes(clusterDescriptiton.Name, clusterStr)
+		return clusterDescriptiton, err
+	default:
+		// Missing provider
+		// Using OPENSTACK
+		// Provider OPENSTACK
+		loggerCL.Info("Could not found specific provider. Use OPENSTACK")
+		loggerCL.Info("Translating using Provider DEFAULT OPENSTACK configurations", cluster.Name)
+		/*
+			//////////////////////// OPENSTACK //////////////////////////////////////////////
+		*/
+		// Get Provider COnfig
+		OpenStackProviderConfig := GetConfigForOpenStack()
+		// Get Credentials of Provider
+		configs, err := getCredentialsForOpenStackProvider(CAPIConfigFilePath)
+		if err != nil {
+			loggerCL.Error(err, "getCredentialsForOpenStackProvider")
+		}
+		// Add config from CLuster Description to configs variables
+		// TODO: Change this function or redesign Profile Specs to easy to transform
+		// Current only use mapping variables
+		configs = AddInfraConfigsFromClusterDescription(&clusterDescriptiton, configs)
+
+		ownerRefs := map[string]string{
+			"CLUSTER_OWNER_API_VERSION": cluster.DeepCopy().APIVersion,
+			"CLUSTER_OWNER_KIND":        cluster.DeepCopy().Kind,
+			"CLUSTER_OWNER_NAME":        cluster.DeepCopy().Name,
+			"CLUSTER_OWNER_UID":         string(cluster.ObjectMeta.DeepCopy().UID),
+		}
+		configs = AddToConfigs(configs, ownerRefs)
+
+		clusterStr, _ := TranslateFromClusterDescritionToCAPI(&clusterDescriptiton, OpenStackProviderConfig, configs)
+		loggerCL.Info("Print CAPI Resources:", clusterDescriptiton.Name, clusterStr)
+		r.ApplyCAPIResourceToKubernertes(clusterDescriptiton.Name, clusterStr)
+	}
 	return clusterDescriptiton, err
 }
 func GetOpenStackConfigPath(systemConfigPath string) (string, error) {

@@ -33,6 +33,14 @@ type InstallComponent struct {
 	TargetNamespace string
 	KubeConfigPath  string
 }
+
+const (
+	flannelTemplate    = "https://github.com/flannel-io/flannel/releases/download/v0.22.0/flannel.tgz"
+	calicoTemplate     = "https://github.com/projectcalico/calico/releases/download/v3.26.1/tigera-operator-v3.26.1.tgz"
+	ciliumTemplate     = "https://github.com/ntnguyencse/helm-mod/raw/main/test/charts/cilium-1.13.0.tar.gz"
+	prometheusTemplate = "https://github.com/prometheus-community/helm-charts/releases/download/kube-prometheus-stack-48.1.1/kube-prometheus-stack-48.1.1.tgz"
+)
+
 type Installer struct {
 	Client     client.Client
 	Components []InstallComponent

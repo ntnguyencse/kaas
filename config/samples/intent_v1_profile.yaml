@@ -26,9 +26,47 @@ metadata:
 spec:
   values:
     cni: flannel
+    namespace: kube-system
     podCIDR: '[10.244.0.0/16]'
     serviceCIDR: '[192.168.0.0/16]'
-    version: 0.20.0
+    url: https://github.com/flannel-io/flannel/releases/download/v0.22.0/flannel.tgz
+    version: 0.22.0
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    revision: 1.0.0
+    type: CNITemplate
+  name: calico-default
+  namespace: default
+spec:
+  values:
+    cni: calico
+    namespace: kube-system
+    podCIDR: '[192.168.0.0/16]'
+    serviceCIDR: '[192.168.0.0/16]'
+    url: https://github.com/projectcalico/calico/releases/download/v3.26.1/tigera-operator-v3.26.1.tgz
+    version: v3.26.1
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    revision: 1.0.0
+    type: CNITemplate
+  name: cilium-default
+  namespace: default
+spec:
+  values:
+    cni: cilium
+    namespace: kube-system
+    podCIDR: '[192.168.0.0/16]'
+    serviceCIDR: '[192.168.0.0/16]'
+    url: https://github.com/ntnguyencse/helm-mod/raw/main/test/charts/cilium-1.13.0.tar.gz
+    version: 1.13.0
 ---
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
@@ -48,10 +86,10 @@ spec:
     type: ClusterAPITemplate
   values:
     controlPlaneMachineCount: "1"
-    controlplaneFlavor: m1.medium
+    controlplaneFlavor: m1.large
     kubernetesVersion: v1.24.8
-    workerFlavor: m1.medium
-    workerMachineCount: "3"
+    workerFlavor: m1.large
+    workerMachineCount: "1"
 ---
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: Profile
@@ -65,4 +103,47 @@ metadata:
 spec:
   values:
     configmap: prometheus-config
+    url: https://github.com/prometheus-community/helm-charts/releases/download/kube-prometheus-stack-48.1.1/kube-prometheus-stack-48.1.1.tgz
+    namespace: prometheus-system
     version: 2.41.0
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    name: aws-small-cluster
+    provider: aws
+    revision: 1.0.0
+    type: ClusterTemplate
+  name: aws-small-cluster
+  namespace: default
+spec:
+  blueprint:
+  - name: clusterapi-aws-resource-template-default
+    revision: 1.0.0
+    type: ClusterAPITemplate
+  values:
+    controlPlaneMachineCount: "1"
+    controlplaneFlavor: "t3.large"
+    kubernetesVersion: v1.24.8
+    workerFlavor: t3.large
+    workerMachineCount: "1"
+    awsRegion: "ap-northeast-2"
+    awsSshKey: "ntnguyen"
+---
+apiVersion: intent.automation.dcn.ssu.ac.kr/v1
+kind: Profile
+metadata:
+  labels:
+    kind: Infrastructure
+    namespace: default
+    revision: 1.0.0
+    type: ClusterAPITemplate
+  name: clusterapi-aws-resource-template-default
+  namespace: default
+spec:
+  values:
+    filename: cluster-template.yaml
+    url: https://raw.githubusercontent.com/ntnguyencse/L-KaaS/dev/templates/aws/
+    version: v2.2.2
