@@ -73,6 +73,11 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
+
+	if !CAPOClusters.ObjectMeta.DeletionTimestamp.IsZero() {
+		loggerSIC.Info("Cluster is Deleted")
+		return ctrl.Result{}, nil
+	}
 	// CAPOStatus := CAPOClusters.DeepCopy().Status
 	if len(CAPOClusters.ObjectMeta.OwnerReferences) > 0 {
 		ownerRef := CAPOClusters.ObjectMeta.OwnerReferences[0]
@@ -83,11 +88,12 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 			return ctrl.Result{}, nil
 		}
 		capoStatus := CAPOClusters.Status
-		if capoStatus.Phase != string(capiv1alpha4.ClusterPhaseProvisioned) {
+		if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
 			// Get kubeconfig
 			kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
 			if err != nil {
 				loggerSIC.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
+				return ctrl.Result{RequeueAfter: 3 * time.Minute}, nil
 			}
 			if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
 				if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
@@ -96,6 +102,7 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 					kubePath, _ := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
 					// Check healthy of target cluster
 					serverVer, errGetVer := kubernetesclient.GetKubernetesServerVersion(kubePath)
+					loggerSIC.Info("Cluster Version: ", serverVer.Major, serverVer.Minor)
 					if errGetVer == nil && len(serverVer.String()) > 3 {
 						// Install CNI
 						r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
@@ -103,12 +110,12 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 						errUpdate := r.Client.Status().Update(ctx, &ownerLCluster)
 						if errUpdate != nil {
 							loggerSIC.Error(errUpdate, "Error when update LKaaS cluster status")
-							return ctrl.Result{}, errUpdate
+							return ctrl.Result{RequeueAfter: 3 * time.Minute}, errUpdate
 						}
 						return ctrl.Result{}, nil
 					} else {
 						loggerSIC.Error(errGetVer, "Get Cluster version of "+ownerLCluster.Name)
-						return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
+						return ctrl.Result{RequeueAfter: 3 * time.Minute}, nil
 					}
 
 				}
@@ -116,7 +123,7 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 		}
 
 	}
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: 3 * time.Minute}, nil
 }
 func (r *SoftwareInstallationReconciler) getKubeConfigCluster(ctx context.Context, clusterName, nameSpace string) (string, error) {
 	secret := &corev1.Secret{}
@@ -155,13 +162,13 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 		if err == nil {
 			// Install CNI
 			chartPath := CNIProfile.Spec.Values["url"]
-			chartName := CNIProfileName + "-" + randomstring.String(5)
+			chartName := CNIProfileName + "-" + cluster.Name
 			CNINamespace := CNIProfile.Spec.Values["namespace"]
 			valueFilePath := CNIProfile.Spec.Values["value"]
 			// if strings.Contains(CNIProfileName, "flannel"){
 			// 	chartPath = flannelTemplate
 			// }
-
+			loggerLKP.Info("Helm Installer:", kubePath, "chartName:", chartName, chartPath)
 			err = helminstaller.Install(kubePath, chartName, chartPath, valueFilePath, CNINamespace)
 			if err != nil {
 				loggerLKP.Error(err, "Error install Network components: "+CNIProfileName)
@@ -186,7 +193,7 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 			// if strings.Contains(CNIProfileName, "flannel"){
 			// 	chartPath = flannelTemplate
 			// }
-
+			loggerLKP.Info("Helm Installer:", kubePath, "chartName:", chartName, chartPath)
 			err = helminstaller.Install(kubePath, chartName, chartPath, valueFilePath, CNINamespace)
 			if err != nil {
 				loggerLKP.Error(err, "Error install Network components: "+SoftwareProfileName)

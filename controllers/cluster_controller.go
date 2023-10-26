@@ -451,7 +451,7 @@ func (r *ClusterReconciler) GetOrCreateCluster(ctx context.Context, clusterNameS
 		// Using OPENSTACK
 		// Provider OPENSTACK
 		loggerCL.Info("Could not found specific provider. Use OPENSTACK")
-		loggerCL.Info("Translating using Provider DEFAULT OPENSTACK configurations", cluster.Name)
+		loggerCL.Info("Translating using Provider DEFAULT OPENSTACK configurations", cluster.Name, cluster.Kind)
 		/*
 			//////////////////////// OPENSTACK //////////////////////////////////////////////
 		*/

@@ -4,7 +4,7 @@ metadata:
   name: 6g-site-1
   labels:
     automation.dcn.ssu.ac.kr/project: 6g-testbed
-    tenant: 6g-testbed
+    tenant: 6gtestbed
 spec:
   clusters:
     - cluster:

@@ -166,6 +166,8 @@ spec:
                                   type: string
                               type: object
                               x-kubernetes-map-type: atomic
+                            dependonprovider:
+                              type: string
                             infrastructure:
                               items:
                                 description: Content of Blueprint Packages
