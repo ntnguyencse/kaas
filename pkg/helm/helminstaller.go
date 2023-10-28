@@ -18,14 +18,14 @@ func test() {
 }
 func Install(kubePath, chartName, chartPath, valueFilePath, namespace string) error {
 	if len(valueFilePath) > 0 {
-		installArgs := []string{"install", "-f", valueFilePath, chartName, chartPath, "--namespace", namespace, "--kubeconfig", kubePath}
+		installArgs := []string{"install", "-f", valueFilePath, chartName, chartPath, " --create-namespace", "--namespace", namespace, "--kubeconfig", kubePath, "--debug"}
 		err := helmlib.ApplyHelmWrapper(kubePath, chartPath, true, false, installArgs, []string{})
 		if err != nil {
 			fmt.Println("Error when install application:", chartName, chartPath, kubePath, valueFilePath, err)
 		}
 		return err
 	} else {
-		installArgs := []string{"install", chartName, chartPath, "--namespace", namespace, "--kubeconfig", kubePath}
+		installArgs := []string{"install", chartName, chartPath, "--create-namespace", "--namespace", namespace, "--kubeconfig", kubePath, "--debug"}
 		err := helmlib.ApplyHelmWrapper(kubePath, chartPath, true, false, installArgs, []string{})
 		if err != nil {
 			fmt.Println("Error when install application:", chartName, chartPath, kubePath, err)
