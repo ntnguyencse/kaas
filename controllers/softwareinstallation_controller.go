@@ -151,7 +151,7 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 	// clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.RegistrationkubePath
 	// Install CNI
 	loggerSIC.Info("ReconcileInstallSoftware" + CAPICluster.Name)
-	loggerSIC.Info("Begin Install CNI to  "+ CAPICluster.Name)
+	loggerSIC.Info("Begin Install CNI to  " + CAPICluster.Name)
 	// Get Profiles related to Clusters
 	listProfiles, err := r.GetListProfile(ctx, req)
 	if err != nil {
@@ -170,7 +170,7 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 			// if strings.Contains(CNIProfileName, "flannel"){
 			// 	chartPath = flannelTemplate
 			// }
-			loggerSIC.Info(CAPICluster.Name + " Helm Installer:", kubePath, "chartName:", chartName, chartPath)
+			loggerSIC.Info(CAPICluster.Name+" Helm Installer:", kubePath, "chartName:", chartName, chartPath)
 			err = helminstaller.Install(kubePath, chartName, chartPath, valueFilePath, CNINamespace)
 			if err != nil {
 				loggerSIC.Error(err, "Error install Network components: "+CNIProfileName)
@@ -180,7 +180,7 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 
 	}
 	loggerSIC.Info("Finish install CNI")
-	loggerSIC.Info("Begin install Software")
+	loggerSIC.Info("Begin install Software at "+cluster.Name+": ", cluster.Spec.Software)
 	// 2. Software Profiles
 	for _, item := range cluster.Spec.Software {
 		// 1. CNI Profiles
