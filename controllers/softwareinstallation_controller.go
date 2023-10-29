@@ -180,7 +180,7 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 
 	}
 	loggerSIC.Info("Finish install CNI")
-	loggerSIC.Info("Begin install Software at "+cluster.Name+": ", cluster.Spec.Software)
+	loggerSIC.Info("Begin install Software at ", cluster.Name+": ", cluster.Spec.Software)
 	// 2. Software Profiles
 	for _, item := range cluster.Spec.Software {
 		// 1. CNI Profiles
@@ -189,7 +189,7 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 		if err == nil {
 			// Install CNI
 			chartPath := SoftwareProfile.Spec.Values["url"]
-			chartName := SoftwareProfileName + "-" + randomstring.String(5)
+			chartName := SoftwareProfileName + "-" + cluster.Name
 			CNINamespace := SoftwareProfile.Spec.Values["namespace"]
 			valueFilePath := SoftwareProfile.Spec.Values["value"]
 			// if strings.Contains(CNIProfileName, "flannel"){

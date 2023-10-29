@@ -9,12 +9,12 @@ spec:
         name: openstack-small-cluster
         type: ClusterTemplate
   network:
-    - name: flannel-default
+    - name: cilium-default
       spec: 
-        name: flannel-default
+        name: cilium-default
         type: CNITemplate
   software:
-    - name: prometheus-v2.2
+    - name: prometheus-default
       spec: 
         name: prometheus-default
         type: ApplicationTemplate
