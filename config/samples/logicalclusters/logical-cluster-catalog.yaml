@@ -12,7 +12,7 @@ spec:
       metadata:
         labels:
           automation.dcn.ssu.ac.kr/location: site-1
-          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+          automation.dcn.ssu.ac.kr/managed-by: lkaas
       spec:
         clustercatalog: openstack-medium-catalog
     - cluster:
@@ -20,7 +20,7 @@ spec:
       metadata:
         labels:
           automation.dcn.ssu.ac.kr/location: site-1
-          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+          automation.dcn.ssu.ac.kr/managed-by: lkaas
       spec:
         clustercatalog: openstack-medium-catalog
 
