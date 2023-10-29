@@ -63,7 +63,7 @@ type ClusterSpec struct {
 	ClusterRef *corev1.ObjectReference `json:"clusterref,omitempty"`
 	// Paused can be used to prevent controllers from processing the Cluster and all its associated objects.
 	// +optional
-	Paused bool `json:"paused,omitempty"`
+	Paused           bool          `json:"paused,omitempty"`
 	DependOnProvider CloudProvider `json:"dependonprovider,omitempty"`
 }
 

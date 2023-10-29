@@ -62,9 +62,9 @@ metadata:
 spec:
   values:
     cni: cilium
-    namespace: kube-system
-    podCIDR: '[192.168.0.0/16]'
-    serviceCIDR: '[192.168.0.0/16]'
+    namespace: cilium-system
+    podCIDR: '[10.0.0.0/20]'
+    serviceCIDR: '[10.0.16.0/24]'
     url: https://github.com/ntnguyencse/helm-mod/raw/main/test/charts/cilium-1.13.0.tar.gz
     version: 1.13.0
 ---
@@ -86,9 +86,9 @@ spec:
     type: ClusterAPITemplate
   values:
     controlPlaneMachineCount: "1"
-    controlplaneFlavor: m1.large
+    controlplaneFlavor: cluster.controller
     kubernetesVersion: v1.24.8
-    workerFlavor: m1.large
+    workerFlavor: cluster.controller
     workerMachineCount: "1"
 ---
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1

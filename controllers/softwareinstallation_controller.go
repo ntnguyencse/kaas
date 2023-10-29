@@ -73,6 +73,11 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
+
+	if !CAPOClusters.ObjectMeta.DeletionTimestamp.IsZero() {
+		loggerSIC.Info("Cluster is Deleted")
+		return ctrl.Result{}, nil
+	}
 	// CAPOStatus := CAPOClusters.DeepCopy().Status
 	if len(CAPOClusters.ObjectMeta.OwnerReferences) > 0 {
 		ownerRef := CAPOClusters.ObjectMeta.OwnerReferences[0]
@@ -83,32 +88,35 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 			return ctrl.Result{}, nil
 		}
 		capoStatus := CAPOClusters.Status
-		if capoStatus.Phase != string(capiv1alpha4.ClusterPhaseProvisioned) {
+		if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
 			// Get kubeconfig
 			kubeconfig, err := r.getKubeConfigCluster(ctx, CAPOClusters.Name, CAPOClusters.Namespace)
 			if err != nil {
 				loggerSIC.Error(err, "Error when get Kubeconfig: "+CAPOClusters.Name)
+				return ctrl.Result{RequeueAfter: 3 * time.Minute}, nil
 			}
 			if capoStatus.Phase == string(capiv1alpha4.ClusterPhaseProvisioned) {
 				if ownerLCluster.Status.Ready && string(ownerLCluster.Status.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !ownerLCluster.Status.Registration {
-					loggerSIC.Info("Start installing software")
+					loggerSIC.Info("Start installing software " + CAPOClusters.Name)
 					folderCAPOCluster := "/tmp/" + ownerLCluster.Name + randomstring.String(5) + "/"
 					kubePath, _ := emcoctl.SaveValueFile(Name(CAPOClusters.Name, KubeConfigSecretSuffix+".kubeconfig"), folderCAPOCluster, &kubeconfig)
 					// Check healthy of target cluster
 					serverVer, errGetVer := kubernetesclient.GetKubernetesServerVersion(kubePath)
+
 					if errGetVer == nil && len(serverVer.String()) > 3 {
+						loggerSIC.Info("Cluster Version: ", serverVer.String(), "EOF")
 						// Install CNI
 						r.ReconcileInstallSoftware(ctx, req, kubePath, &ownerLCluster, CAPOClusters)
 						// Update status
 						errUpdate := r.Client.Status().Update(ctx, &ownerLCluster)
 						if errUpdate != nil {
 							loggerSIC.Error(errUpdate, "Error when update LKaaS cluster status")
-							return ctrl.Result{}, errUpdate
+							return ctrl.Result{RequeueAfter: 3 * time.Minute}, errUpdate
 						}
 						return ctrl.Result{}, nil
 					} else {
 						loggerSIC.Error(errGetVer, "Get Cluster version of "+ownerLCluster.Name)
-						return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
+						return ctrl.Result{RequeueAfter: 3 * time.Minute}, nil
 					}
 
 				}
@@ -116,7 +124,7 @@ func (r *SoftwareInstallationReconciler) Reconcile(ctx context.Context, req ctrl
 		}
 
 	}
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: 3 * time.Minute}, nil
 }
 func (r *SoftwareInstallationReconciler) getKubeConfigCluster(ctx context.Context, clusterName, nameSpace string) (string, error) {
 	secret := &corev1.Secret{}
@@ -142,11 +150,12 @@ func (r *SoftwareInstallationReconciler) GetListProfile(ctx context.Context, req
 func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Context, req ctrl.Request, kubePath string, cluster *intentv1.Cluster, CAPICluster *capiv1alpha4.Cluster) error {
 	// clusterStatus.Ready && string(clusterStatus.Phase) == string(capiv1alpha4.ClusterPhaseProvisioned) && !clusterStatus.RegistrationkubePath
 	// Install CNI
-	loggerSIC.Info("Begin Install CNI")
+	loggerSIC.Info("ReconcileInstallSoftware" + CAPICluster.Name)
+	loggerSIC.Info("Begin Install CNI to  " + CAPICluster.Name)
 	// Get Profiles related to Clusters
 	listProfiles, err := r.GetListProfile(ctx, req)
 	if err != nil {
-		loggerLKP.Error(err, "Error get profiles")
+		loggerSIC.Error(err, "Error get profiles")
 	}
 	for _, item := range cluster.Spec.Network {
 		// 1. CNI Profiles
@@ -155,23 +164,23 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 		if err == nil {
 			// Install CNI
 			chartPath := CNIProfile.Spec.Values["url"]
-			chartName := CNIProfileName + "-" + randomstring.String(5)
+			chartName := CNIProfileName + "-" + cluster.Name
 			CNINamespace := CNIProfile.Spec.Values["namespace"]
 			valueFilePath := CNIProfile.Spec.Values["value"]
 			// if strings.Contains(CNIProfileName, "flannel"){
 			// 	chartPath = flannelTemplate
 			// }
-
+			loggerSIC.Info(CAPICluster.Name+" Helm Installer:", kubePath, "chartName:", chartName, chartPath)
 			err = helminstaller.Install(kubePath, chartName, chartPath, valueFilePath, CNINamespace)
 			if err != nil {
-				loggerLKP.Error(err, "Error install Network components: "+CNIProfileName)
+				loggerSIC.Error(err, "Error install Network components: "+CNIProfileName)
 				return err
 			}
 		}
 
 	}
-	loggerLKP.Info("Finish install CNI")
-	loggerLKP.Info("Begin install Software")
+	loggerSIC.Info("Finish install CNI")
+	loggerSIC.Info("Begin install Software at ", cluster.Name+": ", cluster.Spec.Software)
 	// 2. Software Profiles
 	for _, item := range cluster.Spec.Software {
 		// 1. CNI Profiles
@@ -180,21 +189,21 @@ func (r *SoftwareInstallationReconciler) ReconcileInstallSoftware(ctx context.Co
 		if err == nil {
 			// Install CNI
 			chartPath := SoftwareProfile.Spec.Values["url"]
-			chartName := SoftwareProfileName + "-" + randomstring.String(5)
+			chartName := SoftwareProfileName + "-" + cluster.Name
 			CNINamespace := SoftwareProfile.Spec.Values["namespace"]
 			valueFilePath := SoftwareProfile.Spec.Values["value"]
 			// if strings.Contains(CNIProfileName, "flannel"){
 			// 	chartPath = flannelTemplate
 			// }
-
+			loggerSIC.Info("Helm Installer:", kubePath, "chartName:", chartName, chartPath)
 			err = helminstaller.Install(kubePath, chartName, chartPath, valueFilePath, CNINamespace)
 			if err != nil {
-				loggerLKP.Error(err, "Error install Network components: "+SoftwareProfileName)
+				loggerSIC.Error(err, "Error install Network components: "+SoftwareProfileName)
 				return err
 			}
 		}
 	}
-	loggerLKP.Info("Finish install Software")
+	loggerSIC.Info("Finish install Software")
 
 	// Update cluster status
 	cluster.Status.Registration = true
@@ -214,10 +223,10 @@ func (r *SoftwareInstallationReconciler) GetClusterOwnerObject(ctx context.Conte
 	// Check error when get logical cluster corresponding in ownerRef
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			loggerLKP.Error(err, "Error when get Cluster in OwnerRef not Found: ")
+			loggerSIC.Error(err, "Error when get Cluster in OwnerRef not Found: ")
 			return lcluster, err
 		} else {
-			loggerLKP.Error(err, "Error when get Cluster in OwnerRef")
+			loggerSIC.Error(err, "Error when get Cluster in OwnerRef")
 			return lcluster, err
 		}
 	}

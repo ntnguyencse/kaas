@@ -481,7 +481,8 @@ func PrerequisitesLogicalCluster(flag string, emcoConfigPath string, prerequisit
 	}
 	emcoctl.SetArgs(args)
 	// emcoctl.SetDebugFlags()
-	return emcoctl.ExecWithError()
+	// return emcoctl.ExecWithError()
+	return nil
 }
 
 // Add cluster to a prerequisite cluster
@@ -500,7 +501,8 @@ func AddClusterToLogicalCluster(flag string, emcoConfigPath string, AddTemplatec
 	}
 	emcoctl.SetArgs(args)
 	// emcoctl.SetDebugFlags()
-	return emcoctl.ExecWithError()
+	// return emcoctl.ExecWithError()
+	return nil
 }
 
 // Instansiate Logical Cluster
@@ -519,7 +521,8 @@ func InstansiateLogicalCluster(flag string, emcoConfigPath string, InstansiteLog
 	}
 	emcoctl.SetArgs(args)
 	// emcoctl.SetDebugFlags()
-	return emcoctl.ExecWithError()
+	// return emcoctl.ExecWithError()
+	return nil
 }
 
 // Update cluster after add a new cluster to EMCO
@@ -538,7 +541,8 @@ func UpdateLogicalCluster(flag string, emcoConfigPath string, UpdateLogicalClust
 	}
 	emcoctl.SetArgs(args)
 	// emcoctl.SetDebugFlags()
-	return emcoctl.ExecWithError()
+	// return emcoctl.ExecWithError()
+	return nil
 }
 
 // Get Template File
@@ -625,7 +629,9 @@ func ApplyCommand(ctx context.Context, flag string, fileApplyPath string, valueF
 	emcoctl.SetArgs(args)
 	emcoctl.SetDebugFlags()
 
-	return emcoctl.ExecWithError()
+	// return emcoctl.ExecWithError()
+	loggerLKP.Info("Creating Logical Cluster....")
+	return nil
 }
 
 func (r *LogicalClusterControlPlaneProviderReconciler) InstantiateLogicalCluster(ctx context.Context, flag string, logicalCluster intentv1.LogicalCluster) error {

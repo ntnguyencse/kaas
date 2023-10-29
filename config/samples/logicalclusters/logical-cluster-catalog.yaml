@@ -1,26 +1,26 @@
 apiVersion: intent.automation.dcn.ssu.ac.kr/v1
 kind: LogicalCluster
 metadata:
-  name: 6g-site-1
+  name: intra-edges
   labels:
-    automation.dcn.ssu.ac.kr/project: 6g-testbed
-    tenant: 6g-testbed
+    automation.dcn.ssu.ac.kr/project: intra-edges
+    tenant: intra-edges
 spec:
   clusters:
     - cluster:
-      name: mec-1
+      name: edge-1
       metadata:
         labels:
           automation.dcn.ssu.ac.kr/location: site-1
-          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+          automation.dcn.ssu.ac.kr/managed-by: lkaas
       spec:
         clustercatalog: openstack-medium-catalog
     - cluster:
-      name: mec-2
+      name: edge-2
       metadata:
         labels:
           automation.dcn.ssu.ac.kr/location: site-1
-          automation.dcn.ssu.ac.kr/managed-by: emco-mec-central-mgmt
+          automation.dcn.ssu.ac.kr/managed-by: lkaas
       spec:
         clustercatalog: openstack-medium-catalog
 
