@@ -13,6 +13,7 @@ spec:
         labels:
           automation.dcn.ssu.ac.kr/location: site-1
           automation.dcn.ssu.ac.kr/managed-by: lkaas
+          automation.dcn.ssu.ac.kr/repository: github.com/SFC-Demo/edge/edge-1
       spec:
         clustercatalog: openstack-medium-catalog
     - cluster:
@@ -21,6 +22,7 @@ spec:
         labels:
           automation.dcn.ssu.ac.kr/location: site-1
           automation.dcn.ssu.ac.kr/managed-by: lkaas
+          automation.dcn.ssu.ac.kr/managed-by: github.com/SFC-Demo/edge/edge-2
       spec:
         clustercatalog: openstack-medium-catalog
 
