@@ -1,3 +1,4 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/ntnguyencse/L-KaaS.svg)](https://pkg.go.dev/github.com/ntnguyencse/L-KaaS)
 # Logical Kubernetes as a Service
 
 * L-KaaS is a project focused on providing declarative APIs and tooling to simplify, abstract, be easy to use for users who don’t have deep technical knowledge of infrastructure and shield them from low-level concepts and technologies.
