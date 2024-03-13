@@ -22,7 +22,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	gitlab.com/project-emco/core/emco-base/src/orchestrator v0.0.0-20221213073359-591fb7a56f90
 	google.golang.org/grpc v1.54.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.4
 	k8s.io/apimachinery v0.26.4
